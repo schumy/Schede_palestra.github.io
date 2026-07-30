@@ -850,6 +850,13 @@
   text-align: center;
   margin-top: 26px;
 }
+.backup-bar{
+  display:flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 30px;
+  flex-wrap: wrap;
+}
 .scheda-note-block{
   margin: 2px 0 18px;
 }
@@ -973,6 +980,12 @@
   <div class="tabs" id="tabs"></div>
 
   <div id="schedaContainer"></div>
+
+  <div class="backup-bar">
+    <button class="btn btn-small" id="btnEsportaBackup">Esporta backup</button>
+    <button class="btn btn-small" id="btnImportaBackup">Importa backup</button>
+    <input type="file" id="inputImportaBackupFile" accept="application/json,.json" style="display:none;" />
+  </div>
 
   <div class="storage-note">I dati vengono salvati automaticamente su questo dispositivo/browser.</div>
 
@@ -2451,6 +2464,79 @@
     saveData();
     render();
   });
+
+  document.getElementById('btnEsportaBackup').addEventListener('click', () => {
+    const backup = {
+      schede: state.schede,
+      currentId: state.currentId,
+      customExercises: state.customExercises,
+      attrezzi: state.attrezzi,
+      folders: state.folders,
+      currentFolderId: state.currentFolderId,
+      exportedAt: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup-schede-${dateStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast('Backup esportato');
+  });
+
+  document.getElementById('btnImportaBackup').addEventListener('click', () => {
+    document.getElementById('inputImportaBackupFile').click();
+  });
+
+  document.getElementById('inputImportaBackupFile').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const parsed = JSON.parse(reader.result);
+        openImportaBackupModal(parsed);
+      }catch(err){
+        showToast('File non valido');
+      }
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  });
+
+  function openImportaBackupModal(parsed){
+    modalRoot.innerHTML = `
+      <div class="overlay" id="ovImport">
+        <div class="modal">
+          <h3>Importa backup</h3>
+          <p style="font-size:13px; color:var(--text-muted); margin:0 0 14px;">Questo sostituirà tutte le schede, cartelle, esercizi personalizzati e attrezzi attuali con quelli contenuti nel file. L'azione non è reversibile.</p>
+          <div class="modal-actions">
+            <button class="btn" id="btnAnnullaImport">Annulla</button>
+            <button class="btn btn-primary" id="btnConfermaImport">Importa e sostituisci</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('btnAnnullaImport').addEventListener('click', closeModal);
+    document.getElementById('ovImport').addEventListener('click', (ev) => { if(ev.target.id === 'ovImport') closeModal(); });
+    document.getElementById('btnConfermaImport').addEventListener('click', () => {
+      state.schede = Array.isArray(parsed.schede) ? parsed.schede : [];
+      state.customExercises = Array.isArray(parsed.customExercises) ? parsed.customExercises : [];
+      state.attrezzi = sortAttrezzi(Array.isArray(parsed.attrezzi) && parsed.attrezzi.length ? parsed.attrezzi : ATTREZZI_DEFAULT);
+      state.folders = Array.isArray(parsed.folders) ? parsed.folders : [];
+      state.currentFolderId = parsed.currentFolderId || null;
+      state.currentId = parsed.currentId || (state.schede[0] ? state.schede[0].id : null);
+      editMode = false;
+      saveData();
+      closeModal();
+      render();
+      showToast('Backup importato');
+    });
+  }
 
   loadData();
 })();
