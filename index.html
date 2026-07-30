@@ -1182,6 +1182,15 @@
     });
   }
 
+  function getNextNumero(scheda){
+    let max = 0;
+    scheda.esercizi.forEach(ex => {
+      const n = parseFloat(ex.numero);
+      if(!isNaN(n) && n > max) max = n;
+    });
+    return String(Math.floor(max) + 1);
+  }
+
   function formatStatsInline(ex){
     const hasReps = ex.serie || ex.ripetizioni;
     let main = hasReps ? `${ex.serie || '–'}×${ex.ripetizioni || '–'}` : '';
@@ -2454,7 +2463,7 @@
         }
         const nuovoEx = {
           id: uid(),
-          numero: String(scheda.esercizi.length + 1),
+          numero: getNextNumero(scheda),
           nome,
           muscoli: modalState.muscoli.length ? modalState.muscoli : ["Non specificato"],
           esecuzione: modalState.esecuzione.trim(),
