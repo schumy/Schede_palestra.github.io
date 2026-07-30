@@ -854,8 +854,40 @@
   display:flex;
   justify-content: center;
   gap: 10px;
-  margin-top: 30px;
+  margin-top: 14px;
   flex-wrap: wrap;
+}
+.select-list{
+  display:flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+  margin-bottom: 14px;
+}
+.select-row{
+  display:flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+.select-row:hover{ border-color: var(--accent); }
+.select-row input[type=checkbox]{
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+.select-row-path{
+  display:block;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
 }
 .scheda-note-block{
   margin: 2px 0 18px;
@@ -981,9 +1013,14 @@
 
   <div id="schedaContainer"></div>
 
+  <div class="backup-bar" style="margin-top:28px;">
+    <button class="btn btn-small" id="btnEsportaSchede">Esporta schede…</button>
+    <button class="btn btn-small" id="btnImportaSchede">Importa schede…</button>
+    <input type="file" id="inputImportaSchedeFile" accept="application/json,.json" style="display:none;" />
+  </div>
   <div class="backup-bar">
-    <button class="btn btn-small" id="btnEsportaBackup">Esporta backup</button>
-    <button class="btn btn-small" id="btnImportaBackup">Importa backup</button>
+    <button class="btn btn-small" id="btnEsportaBackup">Esporta backup completo</button>
+    <button class="btn btn-small" id="btnImportaBackup">Importa backup completo</button>
     <input type="file" id="inputImportaBackupFile" accept="application/json,.json" style="display:none;" />
   </div>
 
@@ -2463,6 +2500,130 @@
     editingFolderId = nuovaCartella.id;
     saveData();
     render();
+  });
+
+  function openEsportaSchedeModal(){
+    const rows = state.schede.map(s => {
+      const pathLabel = getFolderPath(s.folderId).map(f => f.nome).join(' / ') || 'Nessuna cartella';
+      return `
+        <label class="select-row">
+          <input type="checkbox" class="export-scheda-checkbox" data-id="${escapeAttr(s.id)}" checked />
+          <span>${escapeHtml(s.nome)}<span class="select-row-path">${escapeHtml(pathLabel)}</span></span>
+        </label>
+      `;
+    }).join('') || `<div class="custom-ex-empty">Nessuna scheda disponibile.</div>`;
+
+    modalRoot.innerHTML = `
+      <div class="overlay" id="ovExportSel">
+        <div class="modal">
+          <h3>Esporta schede</h3>
+          <p style="font-size:13px; color:var(--text-muted); margin:0 0 12px;">Seleziona le schede da esportare in un unico file.</p>
+          <div class="select-list">${rows}</div>
+          <div class="modal-actions">
+            <button class="btn" id="btnAnnullaExportSel">Annulla</button>
+            <button class="btn btn-primary" id="btnConfermaExportSel">Esporta selezionate</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('btnAnnullaExportSel').addEventListener('click', closeModal);
+    document.getElementById('ovExportSel').addEventListener('click', (e) => { if(e.target.id === 'ovExportSel') closeModal(); });
+    document.getElementById('btnConfermaExportSel').addEventListener('click', () => {
+      const ids = [...document.querySelectorAll('.export-scheda-checkbox:checked')].map(cb => cb.dataset.id);
+      if(!ids.length){ showToast('Seleziona almeno una scheda'); return; }
+      const selectedSchede = state.schede.filter(s => ids.includes(s.id));
+      const usedCustomIds = new Set();
+      selectedSchede.forEach(s => s.esercizi.forEach(ex => {
+        const custom = state.customExercises.find(c => c.nome === ex.nome);
+        if(custom) usedCustomIds.add(custom.id);
+      }));
+      const payload = {
+        type: 'schede-selezione',
+        schede: selectedSchede,
+        customExercises: state.customExercises.filter(c => usedCustomIds.has(c.id)),
+        attrezzi: state.attrezzi,
+        exportedAt: new Date().toISOString()
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = selectedSchede.length === 1 ? `${sanitizeFileName(selectedSchede[0].nome)}.json` : `schede-${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      closeModal();
+      showToast('Schede esportate');
+    });
+  }
+
+  function openImportaSchedeModal(parsed){
+    const list = Array.isArray(parsed.schede) ? parsed.schede : [];
+    if(!list.length){ showToast('Nessuna scheda trovata nel file'); return; }
+    const rows = list.map((s, i) => `
+      <label class="select-row">
+        <input type="checkbox" class="import-scheda-checkbox" data-index="${i}" checked />
+        <span>${escapeHtml(s.nome || 'Senza nome')}<span class="select-row-path">${(s.esercizi || []).length} esercizi</span></span>
+      </label>
+    `).join('');
+
+    modalRoot.innerHTML = `
+      <div class="overlay" id="ovImportSel">
+        <div class="modal">
+          <h3>Importa schede</h3>
+          <p style="font-size:13px; color:var(--text-muted); margin:0 0 12px;">Seleziona quali aggiungere. Le schede già presenti non verranno toccate: quelle importate finiscono senza cartella, poi puoi spostarle.</p>
+          <div class="select-list">${rows}</div>
+          <div class="modal-actions">
+            <button class="btn" id="btnAnnullaImportSel">Annulla</button>
+            <button class="btn btn-primary" id="btnConfermaImportSel">Importa selezionate</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('btnAnnullaImportSel').addEventListener('click', closeModal);
+    document.getElementById('ovImportSel').addEventListener('click', (e) => { if(e.target.id === 'ovImportSel') closeModal(); });
+    document.getElementById('btnConfermaImportSel').addEventListener('click', () => {
+      const indices = [...document.querySelectorAll('.import-scheda-checkbox:checked')].map(cb => parseInt(cb.dataset.index, 10));
+      if(!indices.length){ showToast('Seleziona almeno una scheda'); return; }
+      indices.forEach(i => {
+        const nuovaScheda = JSON.parse(JSON.stringify(list[i]));
+        nuovaScheda.id = uid();
+        nuovaScheda.folderId = null;
+        (nuovaScheda.esercizi || []).forEach(ex => { ex.id = uid(); });
+        state.schede.push(nuovaScheda);
+      });
+      (parsed.customExercises || []).forEach(c => {
+        const exists = state.customExercises.find(x => x.nome.toLowerCase() === c.nome.toLowerCase());
+        if(!exists) state.customExercises.push({ ...c, id: uid() });
+      });
+      (parsed.attrezzi || []).forEach(a => addAttrezzoGlobale(a));
+      saveData();
+      closeModal();
+      render();
+      showToast('Schede importate');
+    });
+  }
+
+  document.getElementById('btnEsportaSchede').addEventListener('click', openEsportaSchedeModal);
+  document.getElementById('btnImportaSchede').addEventListener('click', () => {
+    document.getElementById('inputImportaSchedeFile').click();
+  });
+  document.getElementById('inputImportaSchedeFile').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const parsed = JSON.parse(reader.result);
+        openImportaSchedeModal(parsed);
+      }catch(err){
+        showToast('File non valido');
+      }
+      e.target.value = '';
+    };
+    reader.readAsText(file);
   });
 
   document.getElementById('btnEsportaBackup').addEventListener('click', () => {
