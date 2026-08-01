@@ -3068,7 +3068,8 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     if(!email || !password){ showAuthError('Inserisci email e password.'); return; }
     localStorage.setItem(REMEMBER_FLAG_KEY, document.getElementById('authRemember').checked ? 'true' : 'false');
     const { error } = await sb.auth.signInWithPassword({ email, password });
-    if(error) showAuthError(error.message);
+    if(error){ showAuthError(error.message); return; }
+    window.location.reload();
   });
 
   document.getElementById('btnAuthSignUp').addEventListener('click', async () => {
@@ -3093,7 +3094,9 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   });
 
   document.getElementById('btnLogout').addEventListener('click', async () => {
-    await sb.auth.signOut();
+    const { error } = await sb.auth.signOut();
+    if(error) console.error('Errore durante il logout', error);
+    window.location.reload();
   });
 
   // I dati (schede, cartelle, esercizi personalizzati, attrezzi) vivono ora
