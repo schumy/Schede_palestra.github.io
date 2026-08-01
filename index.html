@@ -2995,12 +2995,41 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     document.getElementById('btnAnnullaImport').addEventListener('click', closeModal);
     document.getElementById('ovImport').addEventListener('click', (ev) => { if(ev.target.id === 'ovImport') closeModal(); });
     document.getElementById('btnConfermaImport').addEventListener('click', async () => {
-      state.schede = Array.isArray(parsed.schede) ? parsed.schede : [];
-      state.customExercises = Array.isArray(parsed.customExercises) ? parsed.customExercises : [];
+      // Rigenera sempre id nuovi e validi: un backup può provenire da una
+      // versione precedente dell'app con id in un formato non compatibile
+      // col database (o semplicemente per evitare scontri con id esistenti).
+      const idMap = {};
+      function remapId(oldId){
+        if(!oldId) return null;
+        if(!idMap[oldId]) idMap[oldId] = uid();
+        return idMap[oldId];
+      }
+
+      const importedFolders = Array.isArray(parsed.folders) ? parsed.folders : [];
+      const newFolders = importedFolders.map(f => ({
+        id: remapId(f.id),
+        nome: f.nome,
+        parentId: f.parentId ? remapId(f.parentId) : null
+      }));
+
+      const importedSchede = Array.isArray(parsed.schede) ? parsed.schede : [];
+      const newSchede = importedSchede.map(s => ({
+        id: uid(),
+        nome: s.nome,
+        note: s.note || '',
+        folderId: s.folderId ? remapId(s.folderId) : null,
+        esercizi: (s.esercizi || []).map(ex => ({ ...ex, id: uid() }))
+      }));
+
+      const importedCustom = Array.isArray(parsed.customExercises) ? parsed.customExercises : [];
+      const newCustom = importedCustom.map(c => ({ ...c, id: uid() }));
+
+      state.folders = newFolders;
+      state.schede = newSchede;
+      state.customExercises = newCustom;
       state.attrezzi = sortAttrezzi(Array.isArray(parsed.attrezzi) && parsed.attrezzi.length ? parsed.attrezzi : ATTREZZI_DEFAULT);
-      state.folders = Array.isArray(parsed.folders) ? parsed.folders : [];
-      state.currentFolderId = parsed.currentFolderId || null;
-      state.currentId = parsed.currentId || (state.schede[0] ? state.schede[0].id : null);
+      state.currentFolderId = null;
+      state.currentId = state.schede[0] ? state.schede[0].id : null;
       editMode = false;
       if(currentUserId){
         try{
