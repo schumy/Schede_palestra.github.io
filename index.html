@@ -1247,21 +1247,10 @@
 const SUPABASE_URL = "https://kmzotdnierbkqyvnlfqs.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imttem90ZG5pZXJia3F5dm5sZnFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1Nzc3MjEsImV4cCI6MjEwMTE1MzcyMX0.bFHhBErlB3ajZvvmIVXErrLbm4qUq4vuPmlyUEWbIBg";
 
-// "Rimani connesso": se attivo, la sessione va in localStorage (sopravvive
-// alla chiusura del browser); se disattivo, va in sessionStorage (si perde
-// alla chiusura). Il flag stesso è sempre letto/scritto in localStorage.
 const REMEMBER_FLAG_KEY = "schede-remember-me";
-function getAuthStorage(){
-  return localStorage.getItem(REMEMBER_FLAG_KEY) === "false" ? sessionStorage : localStorage;
-}
-const dynamicAuthStorage = {
-  getItem: (key) => getAuthStorage().getItem(key),
-  setItem: (key, value) => getAuthStorage().setItem(key, value),
-  removeItem: (key) => getAuthStorage().removeItem(key)
-};
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { storage: dynamicAuthStorage, persistSession: true, autoRefreshToken: true }
+  auth: { persistSession: true, autoRefreshToken: true }
 });
 </script>
 <script>
@@ -3094,6 +3083,15 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     authHintEl.textContent = "Controlla la tua email per confermare l'account, poi accedi.";
   });
 
+  // Se "Rimani connesso" non è spuntato, prova a disconnettere quando la
+  // pagina viene chiusa (best-effort: alcuni browser possono comunque
+  // mantenere la sessione se la chiusura non è "pulita").
+  window.addEventListener('pagehide', () => {
+    if(localStorage.getItem(REMEMBER_FLAG_KEY) === 'false'){
+      sb.auth.signOut();
+    }
+  });
+
   document.getElementById('btnLogout').addEventListener('click', async () => {
     await sb.auth.signOut();
   });
@@ -3101,19 +3099,28 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   // I dati (schede, cartelle, esercizi personalizzati, attrezzi) vivono ora
   // nel database Supabase, legati al tuo account: cambiando dispositivo,
   // finché accedi con lo stesso account, ritrovi tutto.
+  let lastLoadedUserId = null;
+
   sb.auth.onAuthStateChange((event, session) => {
     if(session && session.user){
       currentUserId = session.user.id;
       authScreen.style.display = 'none';
       app.style.display = '';
       userEmailLabel.textContent = session.user.email || '';
-      if(!loaded) loadData();
+      if(lastLoadedUserId !== currentUserId){
+        lastLoadedUserId = currentUserId;
+        state = { schede: [], currentId: null, customExercises: [], attrezzi: sortAttrezzi(ATTREZZI_DEFAULT), folders: [], currentFolderId: null };
+        loaded = false;
+        loadData();
+      }
     } else {
       currentUserId = null;
+      lastLoadedUserId = null;
       loaded = false;
       state = { schede: [], currentId: null, customExercises: [], attrezzi: sortAttrezzi(ATTREZZI_DEFAULT), folders: [], currentFolderId: null };
       app.style.display = 'none';
       authScreen.style.display = 'flex';
+      render();
     }
   });
 })();
