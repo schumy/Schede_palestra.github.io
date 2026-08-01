@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schede-palestra-v1';
+const CACHE_NAME = 'schede-palestra-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -24,7 +24,15 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // Non intercettare MAI richieste verso altri domini (es. Supabase):
+  // devono sempre arrivare in rete, mai servite dalla cache. Sono dati
+  // che cambiano in base a chi è collegato, non file statici dell'app.
+  if(url.origin !== self.location.origin) return;
+
   if(event.request.method !== 'GET') return;
+
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const network = fetch(event.request)
