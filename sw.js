@@ -1,50 +1,3245 @@
-const CACHE_NAME = 'schede-palestra-v2';
-const ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
-];
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Le Mie Schede</title>
+<meta name="description" content="Schede di allenamento personalizzate: esercizi, serie, carichi e note.">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#18191B">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Schede">
+<style>
+  html, body { margin:0; padding:0; background:#18191B; }
+</style>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap');
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-  );
-  self.skipWaiting();
+.auth-screen{
+  min-height: 100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: #18191B;
+  padding: 20px;
+  box-sizing: border-box;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.auth-card{
+  width: 100%;
+  max-width: 380px;
+  background: #212226;
+  border: 1px solid #35373D;
+  border-top: 3px solid #C6FF3D;
+  border-radius: 14px;
+  padding: 30px 26px;
+  box-sizing: border-box;
+}
+.auth-card .gym-title{
+  font-family:'Bebas Neue', sans-serif;
+  font-size: 34px;
+  letter-spacing: 1px;
+  color: #EDEEEF;
+  margin: 0 0 6px;
+}
+.auth-card .gym-title span{ color: #C6FF3D; }
+.auth-sub{
+  font-size: 13px;
+  color: #8B8D93;
+  margin: 0 0 22px;
+}
+.auth-card .field{
+  margin-bottom: 14px;
+}
+.auth-card .field label{
+  display:block;
+  font-family:'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: #8B8D93;
+  margin-bottom: 6px;
+}
+.auth-card .field input{
+  width: 100%;
+  background: #18191B;
+  border: 1px solid #35373D;
+  color: #EDEEEF;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13.5px;
+  box-sizing: border-box;
+}
+.auth-card .field input:focus{
+  outline: none;
+  border-color: #C6FF3D;
+}
+.btn-google{
+  width: 100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap: 8px;
+  background: #FFFFFF;
+  color: #1F1F1F;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 14px;
+  font-weight: 600;
+  font-size: 13.5px;
+  cursor: pointer;
+  margin-bottom: 4px;
+}
+.btn-google:hover{ background: #F2F2F2; }
+.btn-google:disabled{
+  background: #2A2B30;
+  color: #6E7076;
+  cursor: not-allowed;
+}
+.btn-google:disabled:hover{ background: #2A2B30; }
+.google-badge{
+  font-family:'JetBrains Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  background: #35373D;
+  color: #9C9FA6;
+  padding: 2px 7px;
+  border-radius: 20px;
+  margin-left: 4px;
+}
+.auth-divider{
+  text-align:center;
+  color: #8B8D93;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin: 18px 0;
+  position: relative;
+}
+.auth-divider::before, .auth-divider::after{
+  content:"";
+  position:absolute;
+  top:50%;
+  width: 40%;
+  height:1px;
+  background:#35373D;
+}
+.auth-divider::before{ left:0; }
+.auth-divider::after{ right:0; }
+.auth-error{
+  background: rgba(255,90,90,.1);
+  border: 1px solid #FF5A5A;
+  color: #FF9C9C;
+  font-size: 12.5px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+.remember-row{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: #C8CACF;
+  cursor: pointer;
+  margin-bottom: 4px;
+}
+.remember-row input{
+  accent-color: #C6FF3D;
+  width: 15px;
+  height: 15px;
+}
+.auth-actions{
+  display:flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+.auth-actions .btn{
+  flex:1;
+  font-family:'Inter', sans-serif;
+  font-weight:600;
+  font-size: 13px;
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  border: 1px solid #35373D;
+}
+.auth-actions .btn-primary{
+  background: #C6FF3D;
+  color: #101108;
+  border-color: #C6FF3D;
+}
+.auth-actions .btn-primary:hover{ background: #9DCB2E; border-color: #9DCB2E; }
+.auth-actions .btn:not(.btn-primary){
+  background: #212226;
+  color: #EDEEEF;
+}
+.auth-actions .btn:not(.btn-primary):hover{ border-color: #C6FF3D; }
+.auth-hint{
+  font-size: 11.5px;
+  color: #8B8D93;
+  text-align: center;
+  margin: 14px 0 0;
+}
+.user-email{
+  font-family:'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #8B8D93;
+}
+.gym-app{
+  --bg: #17181A;
+  --surface: #212226;
+  --surface-2: #292A2F;
+  --border: #35373D;
+  --text: #EDEEEF;
+  --text-muted: #8B8D93;
+  --accent: #C6FF3D;
+  --accent-dim: #9DCB2E;
+  --tape: #FF6B35;
+  --danger: #FF5A5A;
+
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
+  min-height: 100%;
+  padding: 28px 20px 60px;
+  box-sizing: border-box;
+  border-radius: 14px;
+}
+.gym-app *{ box-sizing: border-box; }
+.gym-app ::selection{ background: var(--accent); color: #111; }
+
+.gym-app :focus-visible{
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce){
+  .gym-app *{ transition: none !important; animation: none !important; }
+}
+
+.gym-header{
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 18px;
+}
+.gym-header-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.gym-account{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.gym-header-actions{
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.gym-title{
+  font-family:'Bebas Neue', 'Inter', sans-serif;
+  font-size: 42px;
+  letter-spacing: 1px;
+  line-height: 1;
+  margin: 0;
+  color: var(--text);
+}
+.gym-title span{ color: var(--accent); }
+.gym-sub{
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: .5px;
+}
+.section-label{
+  font-family:'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--text-muted);
+  margin: 4px 0 8px;
+}
+
+.btn{
+  font-family:'Inter', sans-serif;
+  font-weight:600;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease, transform .1s ease;
+}
+.btn:hover{ border-color: var(--accent); }
+.btn:active{ transform: scale(.97); }
+.btn-primary{
+  background: var(--accent);
+  color: #101108;
+  border-color: var(--accent);
+}
+.btn-primary:hover{ background: var(--accent-dim); border-color: var(--accent-dim); }
+.btn-ghost{
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-muted);
+  padding: 6px 8px;
+}
+.btn-ghost:hover{ color: var(--danger); border-color: var(--danger); background: rgba(255,90,90,.08); }
+.btn-small{ padding: 6px 10px; font-size: 12px; }
+
+.tabs{
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.breadcrumb{
+  display:flex;
+  align-items:center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 13.5px;
+  color: var(--text-muted);
+  margin-bottom: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+.breadcrumb::before{
+  content: "📍";
+  margin-right: 2px;
+  font-size: 12px;
+}
+.breadcrumb-item{
+  cursor: pointer;
+  padding: 3px 7px;
+  border-radius: 5px;
+  font-weight: 600;
+}
+.breadcrumb-item:hover{ color: var(--text); background: var(--surface-2); }
+.breadcrumb-item.current{ color: var(--accent); cursor: default; }
+.breadcrumb-item.current:hover{ background: none; }
+.breadcrumb-sep{ color: var(--border); }
+.folders-grid{
+  display:flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.folder-tile{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  min-width: 140px;
+}
+.folder-tile:hover{ border-color: var(--accent); }
+.folder-icon{ font-size: 15px; color: var(--accent); flex: 0 0 auto; }
+.folder-tile-name{
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+}
+.folder-tile-name-input{
+  font-size: 13.5px;
+  font-weight: 600;
+  background: var(--surface-2);
+  border: 1px solid var(--accent);
+  color: var(--text);
+  border-radius: 4px;
+  padding: 1px 4px;
+  flex: 1;
+  min-width: 0;
+}
+.folder-tile-count{
+  font-family:'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.folder-delete{
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 4px;
+  flex: 0 0 auto;
+}
+.folder-delete:hover{ color: var(--danger); background: rgba(255,90,90,.1); }
+.tab{
+  font-family:'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.tab:hover{ color: var(--text); }
+.tab.active{
+  background: var(--surface-2);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.tab-add{
+  border-style: dashed;
+  color: var(--text-muted);
+}
+
+.scheda-card{
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px;
+}
+.scheda-head{
+  margin-bottom: 18px;
+}
+.scheda-title-row{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.scheda-toolbar{
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.scheda-name-row{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+.scheda-name{
+  font-family:'Bebas Neue', sans-serif;
+  font-size: 26px;
+  letter-spacing: .5px;
+}
+.scheda-name-input{
+  font-family:'Bebas Neue', sans-serif;
+  font-size: 26px;
+  letter-spacing: .5px;
+  background: var(--surface-2);
+  border: 1px solid var(--accent);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+.scheda-count{
+  font-family:'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.empty{
+  text-align: center;
+  padding: 50px 20px;
+  color: var(--text-muted);
+}
+.empty-title{
+  font-family:'Bebas Neue', sans-serif;
+  font-size: 28px;
+  color: var(--text);
+  margin-bottom: 8px;
+  letter-spacing: .5px;
+}
+
+.ex-list{
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ex-row{
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  overflow: hidden;
+}
+.ex-row-main{
+  display:flex;
+  align-items:center;
+  gap: 12px;
+  padding: 9px 12px;
+}
+.ex-num-pill{
+  min-width: 20px;
+  padding: 4px 9px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+  flex: 0 0 auto;
+}
+.ex-drag-handle{
+  flex: 0 0 auto;
+  width: 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.ex-drag-handle:hover{ color: var(--text); }
+.ex-row.dragging{
+  opacity: .5;
+  position: relative;
+  z-index: 5;
+}
+.ex-row.drag-over{
+  border-top: 2px solid var(--accent);
+}
+.ex-num-input{
+  width: 40px;
+  padding: 3px 6px;
+  border-radius: 20px;
+  border: 1px solid var(--accent);
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  text-align: center;
+  flex: 0 0 auto;
+}
+.ex-name-btn-thin{
+  flex: 1 1 auto;
+  min-width: 0;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 14.5px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  padding: 4px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ex-name-btn-thin:hover{ color: var(--accent); }
+.ex-stats-pill{
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface-2);
+  padding: 5px 12px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex: 0 0 auto;
+  margin-right: 16px;
+}
+.ex-plate{
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 30%, #3a3c42, #101114 72%);
+  border: 1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 600;
+}
+.ex-name-btn{
+  flex: 1 1 auto;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  padding: 4px 0;
+  display:flex;
+  align-items: center;
+  gap: 8px;
+}
+.ex-name-btn:hover{ color: var(--accent); }
+.chevron{
+  font-size: 10px;
+  color: var(--text-muted);
+  transition: transform .15s ease;
+}
+.ex-row.open .chevron{ transform: rotate(90deg); color: var(--accent); }
+
+.ex-tags{
+  display:flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  max-width: 46%;
+  justify-content: flex-end;
+}
+.tag{
+  font-family:'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(255,107,53,.12);
+  color: var(--tape);
+  border: 1px solid rgba(255,107,53,.35);
+  white-space: nowrap;
+}
+.ex-main-col{
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.ex-meta-line{
+  display:flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding-left: 20px;
+}
+.meta-chip{
+  font-family:'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.meta-chip.elastico{
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(198,255,61,.1);
+}
+.stat-row{
+  display:flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  align-items: stretch;
+}
+.stat{
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 8px;
+  min-width: 0;
+}
+.stat-narrow{
+  flex: 0 0 auto;
+  width: 50px;
+}
+.stat-wide{
+  flex: 1 1 auto;
+  min-width: 88px;
+}
+.stat-label{
+  font-family:'JetBrains Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.stat-value{
+  font-family:'Bebas Neue', sans-serif;
+  font-size: 16px;
+  letter-spacing: .5px;
+  color: var(--text);
+  margin-top: 2px;
+}
+.stat-input{
+  font-family:'Bebas Neue', sans-serif;
+  font-size: 16px;
+  letter-spacing: .5px;
+  color: var(--text);
+  margin-top: 2px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  width: 100%;
+  min-width: 0;
+  padding: 0 0 2px 0;
+}
+.stat-input:focus{
+  border-bottom-color: var(--accent);
+}
+.stat-input::placeholder{ color: var(--text-muted); }
+.elastico-badge{
+  display:inline-block;
+  font-family:'JetBrains Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  background: rgba(198,255,61,.1);
+  width: fit-content;
+}
+.attrezzi-badges{
+  display:flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.attrezzo-badge{
+  font-family:'JetBrains Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+  padding: 4px 9px;
+  border-radius: 6px;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  background: rgba(198,255,61,.1);
+}
+.attrezzi-grid{
+  display:flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.attrezzo-chip{
+  display:inline-flex;
+  align-items:center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+  padding: 5px 5px 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+.attrezzo-chip.selected{
+  background: rgba(198,255,61,.12);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.attrezzo-remove{
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: .55;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 2px;
+}
+.attrezzo-remove:hover{ opacity: 1; color: var(--danger); }
+.attrezzo-add-btn{
+  font-size: 11.5px;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.attrezzo-add-btn:hover{ color: var(--accent); border-color: var(--accent); }
+.attrezzo-add-row{
+  display:flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.attrezzo-add-row input{
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 7px 9px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-family: 'Inter', sans-serif;
+}
+.custom-ex-list{
+  display:flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 170px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px;
+  background: var(--bg);
+}
+.custom-ex-row{
+  display:flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.custom-ex-row:hover{ background: var(--surface-2); color: var(--text); }
+.custom-ex-row.selected{
+  background: rgba(198,255,61,.12);
+  color: var(--accent);
+}
+.custom-ex-row.new-row{ font-style: italic; }
+.custom-ex-empty{
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.custom-ex-delete{
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex: 0 0 auto;
+}
+.custom-ex-delete:hover{ color: var(--danger); background: rgba(255,90,90,.1); }
+.category-tag{
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+  color: var(--text-muted);
+  background: var(--surface-1);
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.search-divider{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin: 4px 0 14px;
+}
+.search-divider::before, .search-divider::after{
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.confirm-pending{
+  color: #fff !important;
+  background: var(--danger) !important;
+  border-color: var(--danger) !important;
+  opacity: 1 !important;
+  font-weight: 700;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+}
+.dropdown{ position: relative; }
+.dropdown-trigger{
+  width: 100%;
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 9px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 13.5px;
+  text-align: left;
+}
+.dropdown-trigger:hover{ border-color: var(--accent); }
+.dropdown-arrow{
+  color: var(--text-muted);
+  font-size: 11px;
+  transition: transform .15s ease;
+  flex: 0 0 auto;
+}
+.dropdown.open .dropdown-arrow{ transform: rotate(180deg); }
+.dropdown-panel{
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  box-shadow: 0 10px 28px rgba(0,0,0,.45);
+  padding: 6px;
+}
+.field-row{
+  display:flex;
+  gap: 10px;
+}
+.field-row .field{ flex: 1; margin-bottom: 14px; }
+.elastico-toggle{
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  display:inline-block;
+}
+.elastico-toggle.selected{
+  background: rgba(198,255,61,.12);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.select-group{
+  margin-bottom: 4px;
+}
+
+.ex-detail{
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .22s ease;
+  border-top: 1px solid transparent;
+}
+.ex-row.open .ex-detail{
+  max-height: 3000px;
+  border-top: 1px solid var(--border);
+}
+.ex-detail-inner{
+  padding: 14px 14px 16px 62px;
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ex-detail-text{
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.ex-detail-tags{
+  display:flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Modal */
+.overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index: 50;
+  padding: 20px;
+}
+.modal{
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 85vh;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+.modal h3{
+  font-family:'Bebas Neue', sans-serif;
+  font-size: 24px;
+  letter-spacing: .5px;
+  margin: 0 0 14px;
+}
+.field{ margin-bottom: 14px; }
+.field label{
+  display:block;
+  font-family:'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.field input[type=text], .field select, .field textarea{
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13.5px;
+}
+.field textarea{ min-height: 60px; resize: vertical; }
+.muscle-grid{
+  display:flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.muscle-chip{
+  font-size: 11.5px;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+.muscle-chip.selected{
+  background: rgba(198,255,61,.12);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.modal-actions{
+  display:flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+.hint{
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-top: -6px;
+  margin-bottom: 14px;
+}
+.storage-note{
+  font-family:'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 26px;
+}
+.backup-section{
+  display:flex;
+  justify-content: center;
+  margin-top: 30px;
+}
+.backup-group{
+  margin-bottom: 18px;
+}
+.backup-group:last-of-type{ margin-bottom: 6px; }
+.backup-group-label{
+  font-family:'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+.backup-group-desc{
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin: 0 0 10px;
+}
+.backup-group-actions{
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.select-list{
+  display:flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+  margin-bottom: 14px;
+}
+.select-row{
+  display:flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+.select-row:hover{ border-color: var(--accent); }
+.select-row input[type=checkbox]{
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+.select-row-path{
+  display:block;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.scheda-note-block{
+  margin: 2px 0 18px;
+}
+.scheda-note-label, .ex-detail-label{
+  font-family:'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.scheda-note-text{
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+.scheda-note-textarea, .detail-textarea{
+  width: 100%;
+  min-height: 56px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 9px 11px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  resize: vertical;
+}
+.ex-note-text{
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+}
+.mode-bar{
+  display:flex;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+.carichi-block{ margin-top: 2px; }
+.carichi-inputs{
+  display:flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.carico-set{
+  display:flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 4px;
+  min-width: 44px;
+}
+.carico-set-label{
+  font-family:'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.carico-input{
+  width: 42px;
+  text-align: center;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 15px;
+  padding: 1px 0;
+}
+.carico-input:focus{
+  border-bottom-color: var(--accent);
+  outline: none;
+}
+.carico-input::placeholder{ color: var(--text-muted); }
+.gym-toast{
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+  z-index: 100;
+}
+.gym-toast.visible{
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+</style>
+
+</head>
+<body>
+
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <h1 class="gym-title" style="margin-bottom:4px;">LE MIE <span>SCHEDE</span></h1>
+    <p class="auth-sub">Accedi per vedere le tue schede su tutti i dispositivi.</p>
+
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="authEmail" placeholder="tuaemail@esempio.com" autocomplete="email" />
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="authPassword" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+    <div id="authError" class="auth-error" style="display:none;"></div>
+
+    <label class="remember-row">
+      <input type="checkbox" id="authRemember" checked />
+      <span>Rimani connesso su questo dispositivo</span>
+    </label>
+
+    <div class="auth-actions">
+      <button class="btn btn-primary" id="btnAuthSignIn">Accedi</button>
+      <button class="btn" id="btnAuthSignUp">Crea account</button>
+    </div>
+    <p class="auth-hint" id="authHint"></p>
+
+    <div class="auth-divider">oppure</div>
+
+    <button class="btn btn-google" id="btnLoginGoogle" disabled title="In arrivo">
+      <span>Continua con Google</span>
+      <span class="google-badge">Presto disponibile</span>
+    </button>
+  </div>
+</div>
+
+<div class="gym-app" id="gymApp" style="display:none;">
+  <div class="gym-header">
+    <div class="gym-header-top">
+      <div>
+        <h1 class="gym-title">LE MIE <span>SCHEDE</span></h1>
+        <div class="gym-sub" id="dateNow"></div>
+      </div>
+      <div class="gym-account">
+        <span class="user-email" id="userEmailLabel"></span>
+        <button class="btn btn-small" id="btnLogout">Esci</button>
+      </div>
+    </div>
+    <div class="gym-header-actions">
+      <button class="btn" id="btnNuovaCartella">+ Cartella</button>
+      <button class="btn btn-primary" id="btnNuovaScheda">+ Nuova scheda</button>
+    </div>
+  </div>
+
+  <div class="breadcrumb" id="breadcrumb"></div>
+
+  <div class="section-label" id="foldersLabel" style="display:none;">Cartelle</div>
+  <div class="folders-grid" id="foldersGrid"></div>
+
+  <div class="section-label" id="tabsLabel" style="display:none;">Schede</div>
+  <div class="tabs" id="tabs"></div>
+
+  <div id="schedaContainer"></div>
+
+  <div class="backup-section">
+    <button class="btn btn-small" id="btnBackupMenu">Backup e importazione</button>
+  </div>
+
+  <div class="storage-note">I dati vengono salvati automaticamente sul tuo account e sincronizzati su ogni dispositivo.</div>
+
+  <div id="modalRoot"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL = "https://kmzotdnierbkqyvnlfqs.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imttem90ZG5pZXJia3F5dm5sZnFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1Nzc3MjEsImV4cCI6MjEwMTE1MzcyMX0.bFHhBErlB3ajZvvmIVXErrLbm4qUq4vuPmlyUEWbIBg";
+
+const REMEMBER_FLAG_KEY = "schede-remember-me";
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true }
 });
+</script>
+<script>
+(function(){
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
-  );
-  self.clients.claim();
-});
+  const CATEGORIE = {
+    palestra: "Pesi",
+    corpolibero: "Corpo libero",
+    kettlebell: "Kettlebell",
+    personalizzato: "Personalizzato"
+  };
 
-self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
+  const LIBRARY = [
+    // ---- Palestra / Pesi ----
+    { categoria: "palestra", nome: "Panca piana", muscoli: ["Petto","Tricipiti","Spalle"], esecuzione: "Disteso su panca, bilanciere alle spalle in presa poco più larga delle spalle. Scendi controllato fino a sfiorare il petto, poi spingi verso l'alto senza bloccare i gomiti a fine corsa." },
+    { categoria: "palestra", nome: "Squat con bilanciere", muscoli: ["Quadricipiti","Glutei","Femorali"], esecuzione: "Bilanciere sulle trapezie, piedi larghezza spalle. Scendi spingendo i fianchi indietro e le ginocchia in linea con i piedi, fino a cosce parallele al suolo, poi risali spingendo sui talloni." },
+    { categoria: "palestra", nome: "Stacco da terra", muscoli: ["Lombari","Femorali","Glutei","Dorsali"], esecuzione: "Bilanciere a terra vicino agli stinchi, schiena neutra. Solleva spingendo con le gambe e distendendo i fianchi, mantenendo il bilanciere aderente al corpo per tutto il movimento." },
+    { categoria: "palestra", nome: "Military press", muscoli: ["Spalle","Tricipiti"], esecuzione: "In piedi o seduto, bilanciere all'altezza delle clavicole. Spingi verso l'alto sopra la testa senza inarcare eccessivamente la schiena, poi riabbassa controllato." },
+    { categoria: "palestra", nome: "Curl bicipiti con bilanciere", muscoli: ["Bicipiti","Avambracci"], esecuzione: "In piedi, bilanciere in presa supina. Fletti gli avambracci portando il peso verso le spalle mantenendo i gomiti fermi lungo i fianchi, poi ridiscendi lentamente." },
+    { categoria: "palestra", nome: "French press", muscoli: ["Tricipiti"], esecuzione: "Disteso o seduto, bilanciere o manubrio sopra la testa. Fletti solo l'avambraccio portando il peso dietro la testa, poi estendi il braccio senza muovere il gomito." },
+    { categoria: "palestra", nome: "Leg press", muscoli: ["Quadricipiti","Glutei","Femorali"], esecuzione: "Seduto sulla macchina, piedi larghezza spalle sulla pedana. Piega le ginocchia portando il peso verso il petto senza staccare il bacino, poi spingi senza bloccare le ginocchia." },
+    { categoria: "palestra", nome: "Lat machine", muscoli: ["Dorsali","Bicipiti"], esecuzione: "Seduto, presa larga sulla barra. Tira verso il petto alto portando i gomiti verso il basso e le scapole indietro, poi risali controllato." },
+    { categoria: "palestra", nome: "Rematore con bilanciere", muscoli: ["Dorsali","Lombari","Bicipiti"], esecuzione: "Busto inclinato in avanti, schiena dritta. Tira il bilanciere verso l'addome portando i gomiti indietro, poi riabbassa senza perdere la posizione della schiena." },
+    { categoria: "palestra", nome: "Affondi con manubri", muscoli: ["Quadricipiti","Glutei","Femorali"], esecuzione: "Un manubrio per mano, fai un passo avanti piegando entrambe le ginocchia a 90 gradi mantenendo il busto eretto, poi torna alla posizione di partenza." },
+    { categoria: "palestra", nome: "Hip thrust", muscoli: ["Glutei","Femorali"], esecuzione: "Schiena appoggiata a una panca, bilanciere sul bacino. Spingi i fianchi verso l'alto contraendo i glutei fino ad allineare busto e cosce, poi riabbassa controllato." },
+    { categoria: "palestra", nome: "Calf raise", muscoli: ["Polpacci"], esecuzione: "In piedi su un rialzo o macchina dedicata. Solleva i talloni il più possibile contraendo i polpacci, poi scendi lentamente oltre il livello di partenza." },
+    { categoria: "palestra", nome: "Alzate laterali", muscoli: ["Spalle"], esecuzione: "In piedi, un manubrio per mano lungo i fianchi. Solleva le braccia lateralmente fino all'altezza delle spalle con lieve piega dei gomiti, poi riabbassa lentamente." },
 
-  // Non intercettare MAI richieste verso altri domini (es. Supabase):
-  // devono sempre arrivare in rete, mai servite dalla cache. Sono dati
-  // che cambiano in base a chi è collegato, non file statici dell'app.
-  if(url.origin !== self.location.origin) return;
+    // ---- Corpo libero / Calisthenics ----
+    { categoria: "corpolibero", nome: "Trazioni alla sbarra", muscoli: ["Dorsali","Bicipiti"], esecuzione: "Presa prona più larga delle spalle, corpo disteso. Tira il petto verso la sbarra portando i gomiti verso il basso, poi scendi controllato fino a braccia distese." },
+    { categoria: "corpolibero", nome: "Push-up", muscoli: ["Petto","Tricipiti","Spalle"], esecuzione: "Posizione plank con mani poco più larghe delle spalle. Scendi piegando i gomiti fino a sfiorare il petto a terra, poi spingi per tornare distesi." },
+    { categoria: "corpolibero", nome: "Dip alle parallele", muscoli: ["Tricipiti","Petto","Spalle"], esecuzione: "Sospeso sulle parallele, braccia distese. Scendi piegando i gomiti mantenendo il busto leggermente in avanti, poi risali senza bloccare i gomiti a fine corsa." },
+    { categoria: "corpolibero", nome: "Plank", muscoli: ["Addominali","Lombari"], esecuzione: "Appoggio su avambracci e punte dei piedi, corpo in linea retta da testa a talloni. Mantieni la posizione contraendo addome e glutei senza far cadere i fianchi." },
+    { categoria: "corpolibero", nome: "Crunch", muscoli: ["Addominali"], esecuzione: "Disteso supino, ginocchia piegate. Solleva le scapole da terra contraendo l'addome, senza tirare il collo con le mani, poi ridiscendi controllato." },
+    { categoria: "corpolibero", nome: "Squat a corpo libero", muscoli: ["Quadricipiti","Glutei","Femorali"], esecuzione: "Piedi larghezza spalle, braccia in avanti per l'equilibrio. Scendi spingendo i fianchi indietro fino a cosce parallele al suolo, poi risali spingendo sui talloni." },
+    { categoria: "corpolibero", nome: "Pistol squat", muscoli: ["Quadricipiti","Glutei","Addominali"], esecuzione: "In equilibrio su una gamba, l'altra tesa in avanti. Scendi in squat completo sulla gamba d'appoggio mantenendo il busto eretto, poi risali senza toccare terra con l'altro piede." },
+    { categoria: "corpolibero", nome: "Muscle-up", muscoli: ["Dorsali","Petto","Tricipiti","Bicipiti"], esecuzione: "Dalla sbarra, esegui una trazione esplosiva portando il petto oltre la sbarra e ruota i polsi per spingerti in verticale come in un dip." },
+    { categoria: "corpolibero", nome: "Verticale (handstand)", muscoli: ["Spalle","Addominali","Avambracci"], esecuzione: "Mani a terra larghezza spalle, sali in verticale contro un muro mantenendo il corpo in linea e il core contratto per l'equilibrio." },
+    { categoria: "corpolibero", nome: "Australian pull-up", muscoli: ["Dorsali","Bicipiti","Addominali"], esecuzione: "Sospeso sotto una sbarra bassa, corpo inclinato e teso. Tira il petto verso la sbarra portando i gomiti indietro, poi ridiscendi controllato." },
+    { categoria: "corpolibero", nome: "Superman", muscoli: ["Lombari","Glutei"], esecuzione: "Disteso prono, braccia distese in avanti. Solleva contemporaneamente braccia, petto e gambe da terra, mantieni un istante poi riabbassa controllato." },
+    { categoria: "corpolibero", nome: "Mountain climber", muscoli: ["Addominali","Quadricipiti","Spalle"], esecuzione: "Posizione plank con mani a terra. Porta alternativamente le ginocchia verso il petto in modo rapido mantenendo i fianchi bassi e stabili." },
+    { categoria: "corpolibero", nome: "Burpee", muscoli: ["Quadricipiti","Petto","Addominali","Spalle"], esecuzione: "Da in piedi, scendi in accosciata, appoggia le mani a terra e lancia le gambe indietro in plank, esegui un push-up, riporta i piedi avanti e salta verso l'alto." },
+    { categoria: "corpolibero", nome: "Affondi a corpo libero", muscoli: ["Quadricipiti","Glutei","Femorali"], esecuzione: "Fai un passo avanti piegando entrambe le ginocchia a 90 gradi mantenendo il busto eretto, poi torna alla posizione di partenza spingendo sul tallone anteriore." },
 
-  if(event.request.method !== 'GET') return;
+    // ---- Kettlebell ----
+    { categoria: "kettlebell", nome: "Kettlebell swing", muscoli: ["Glutei","Femorali","Lombari","Addominali"], esecuzione: "Kettlebell tra le gambe, presa a due mani. Spingi i fianchi in avanti con forza per far oscillare il kettlebell fino all'altezza del petto, lasciandolo poi ricadere tra le gambe." },
+    { categoria: "kettlebell", nome: "Goblet squat", muscoli: ["Quadricipiti","Glutei","Addominali"], esecuzione: "Kettlebell tenuto con entrambe le mani vicino al petto. Scendi in squat mantenendo il busto eretto e i gomiti tra le ginocchia, poi risali spingendo sui talloni." },
+    { categoria: "kettlebell", nome: "Turkish get-up", muscoli: ["Spalle","Addominali","Glutei"], esecuzione: "Disteso supino con kettlebell sollevato sopra una spalla, esegui una sequenza controllata per arrivare in piedi mantenendo il braccio sempre esteso verso l'alto, poi torna a terra ripetendo il percorso inverso." },
+    { categoria: "kettlebell", nome: "Kettlebell clean and press", muscoli: ["Spalle","Glutei","Addominali","Tricipiti"], esecuzione: "Solleva il kettlebell da terra portandolo al petto in un unico movimento fluido, poi spingilo sopra la testa distendendo il braccio." },
+    { categoria: "kettlebell", nome: "Kettlebell snatch", muscoli: ["Spalle","Glutei","Femorali","Lombari"], esecuzione: "Con uno swing esplosivo porta il kettlebell dal basso fino sopra la testa in un unico movimento, ruotando il polso al momento del passaggio." },
+    { categoria: "kettlebell", nome: "Rematore con kettlebell", muscoli: ["Dorsali","Bicipiti","Lombari"], esecuzione: "Busto inclinato in avanti con un ginocchio e una mano appoggiati su una panca. Tira il kettlebell verso il fianco portando il gomito indietro, poi riabbassa controllato." },
+    { categoria: "kettlebell", nome: "Windmill", muscoli: ["Addominali","Spalle","Femorali"], esecuzione: "Kettlebell sollevato sopra una spalla, piedi larghi. Piega il busto lateralmente verso la gamba opposta al braccio esteso, mantenendo il kettlebell sempre in alto, poi risali." },
+    { categoria: "kettlebell", nome: "Stacco da terra con kettlebell", muscoli: ["Femorali","Glutei","Lombari"], esecuzione: "Kettlebell a terra tra i piedi, schiena neutra. Solleva spingendo con le gambe e distendendo i fianchi fino alla posizione eretta, poi riabbassa controllato." },
+    { categoria: "kettlebell", nome: "Farmer's walk con kettlebell", muscoli: ["Avambracci","Addominali","Spalle"], esecuzione: "Un kettlebell pesante per mano lungo i fianchi. Cammina per una distanza o un tempo stabilito mantenendo busto eretto e spalle basse." }
+  ];
 
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const network = fetch(event.request)
-        .then((response) => {
-          if(response && response.status === 200){
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+  const MUSCLE_OPTIONS = ["Petto","Dorsali","Spalle","Bicipiti","Tricipiti","Avambracci","Quadricipiti","Femorali","Glutei","Polpacci","Addominali","Lombari"];
+
+  const ATTREZZI_DEFAULT = ["Elastico","Manubri","Disco","Zavorra","Bilanciere","Bilanciere a Z"];
+
+  function sortAttrezzi(list){
+    return list.slice().sort((a,b) => a.localeCompare(b, 'it', { sensitivity: 'base' }));
+  }
+
+  const STORAGE_KEY = "gym-schede-data";
+  let state = { schede: [], currentId: null, customExercises: [], attrezzi: sortAttrezzi(ATTREZZI_DEFAULT), folders: [], currentFolderId: null };
+  let selectedMuscles = [];
+  let loaded = false;
+  let currentUserId = null;
+  let editingNumeroExId = null;
+  let editingSchedaNomeId = null;
+  let editingFolderId = null;
+  let editMode = false;
+  let addingAttrezzoExId = null;
+
+  function getNumSerie(ex){
+    const n = parseInt(ex.serie, 10);
+    if(!isNaN(n) && n > 0) return n;
+    return (Array.isArray(ex.carichi) && ex.carichi.length) ? ex.carichi.length : 1;
+  }
+
+  function ensureCarichiArray(ex){
+    if(!Array.isArray(ex.carichi)){
+      const legacy = typeof ex.carichi === 'string' && ex.carichi
+        ? ex.carichi.split(',').map(s => s.trim())
+        : [];
+      ex.carichi = legacy;
+    }
+    const n = getNumSerie(ex);
+    while(ex.carichi.length < n) ex.carichi.push('');
+    if(ex.carichi.length > n) ex.carichi = ex.carichi.slice(0, n);
+  }
+
+  function buildCarichiPerSetHtml(ex){
+    const n = getNumSerie(ex);
+    let boxes = '';
+    for(let i = 0; i < n; i++){
+      const val = ex.carichi[i] || '';
+      boxes += `<div class="carico-set"><span class="carico-set-label">S${i+1}</span><input class="carico-input" type="text" inputmode="decimal" data-index="${i}" value="${escapeAttr(val)}" placeholder="-" /></div>`;
+    }
+    return `
+      <div class="carichi-block">
+        <div class="ex-detail-label">Carichi per serie (kg)</div>
+        <div class="carichi-inputs">${boxes}</div>
+      </div>
+    `;
+  }
+
+  const GRUPPO_PALETTE = ["#4FD1C5","#68D391","#C6FF3D","#F6E05E","#F6AD55","#F56565","#F368B0","#9F7AEA"];
+
+  function hexToRgba(hex, alpha){
+    const h = hex.replace('#','');
+    const r = parseInt(h.substring(0,2),16);
+    const g = parseInt(h.substring(2,4),16);
+    const b = parseInt(h.substring(4,6),16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+
+  function getGroupColorMap(scheda){
+    const map = {};
+    let i = 0;
+    scheda.esercizi.forEach(ex => {
+      const key = ex.numero;
+      if(key && !(key in map)){
+        map[key] = GRUPPO_PALETTE[i % GRUPPO_PALETTE.length];
+        i++;
+      }
+    });
+    return map;
+  }
+
+  function ensureNumeri(scheda){
+    let changed = false;
+    scheda.esercizi.forEach((ex, idx) => {
+      if(!ex.numero){ ex.numero = String(idx + 1); changed = true; }
+      if(!Array.isArray(ex.attrezzi)){ ex.attrezzi = []; changed = true; }
+      if(!Array.isArray(ex.muscoli)){ ex.muscoli = []; changed = true; }
+      if(typeof ex.note !== 'string'){ ex.note = ''; changed = true; }
+      ensureCarichiArray(ex);
+    });
+    if(typeof scheda.note !== 'string'){ scheda.note = ''; changed = true; }
+    if(changed) saveData();
+  }
+
+  function sortEsercizi(scheda){
+    scheda.esercizi.sort((a, b) => {
+      const na = parseFloat(a.numero);
+      const nb = parseFloat(b.numero);
+      const va = isNaN(na) ? Infinity : na;
+      const vb = isNaN(nb) ? Infinity : nb;
+      return va - vb;
+    });
+  }
+
+  function getNextNumero(scheda){
+    let max = 0;
+    scheda.esercizi.forEach(ex => {
+      const n = parseFloat(ex.numero);
+      if(!isNaN(n) && n > max) max = n;
+    });
+    return String(Math.floor(max) + 1);
+  }
+
+  function formatStatsInline(ex){
+    const hasReps = ex.serie || ex.ripetizioni;
+    let main = hasReps ? `${ex.serie || '–'}×${ex.ripetizioni || '–'}` : '';
+    if(ex.recupero) main = main ? `${main} · ${ex.recupero}` : ex.recupero;
+    return main || '—';
+  }
+
+  const app = document.getElementById('gymApp');
+  const tabsEl = document.getElementById('tabs');
+  const schedaContainer = document.getElementById('schedaContainer');
+  const modalRoot = document.getElementById('modalRoot');
+  const breadcrumbEl = document.getElementById('breadcrumb');
+  const foldersGridEl = document.getElementById('foldersGrid');
+
+  document.getElementById('dateNow').textContent = new Date().toLocaleDateString('it-IT', { weekday:'long', day:'numeric', month:'long' });
+
+  function uid(){
+    if(window.crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+    // fallback per browser molto vecchi senza crypto.randomUUID
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  async function loadData(){
+    if(!currentUserId){ loaded = true; return; }
+    try{
+      const [foldersRes, schedeRes, customRes, attrezziRes] = await Promise.all([
+        sb.from('folders').select('*'),
+        sb.from('schede').select('*'),
+        sb.from('custom_exercises').select('*'),
+        sb.from('attrezzi').select('*')
+      ]);
+      if(foldersRes.error) console.error('Errore caricamento cartelle', foldersRes.error);
+      if(schedeRes.error) console.error('Errore caricamento schede', schedeRes.error);
+      if(customRes.error) console.error('Errore caricamento esercizi personalizzati', customRes.error);
+      if(attrezziRes.error) console.error('Errore caricamento attrezzi', attrezziRes.error);
+
+      state.folders = (foldersRes.data || []).map(f => ({ id: f.id, nome: f.nome, parentId: f.parent_id || null }));
+      state.schede = (schedeRes.data || []).map(s => ({
+        id: s.id,
+        nome: s.nome,
+        note: s.note || '',
+        folderId: s.folder_id || null,
+        esercizi: s.esercizi || []
+      }));
+      state.customExercises = (customRes.data || []).map(c => ({
+        id: c.id, nome: c.nome, muscoli: c.muscoli || [], esecuzione: c.esecuzione || '', categoria: 'personalizzato'
+      }));
+      const attrezziNomi = (attrezziRes.data || []).map(a => a.nome);
+      state.attrezzi = sortAttrezzi(attrezziNomi.length ? attrezziNomi : ATTREZZI_DEFAULT);
+
+      state.currentId = state.schede[0] ? state.schede[0].id : null;
+      state.currentFolderId = null;
+    }catch(e){
+      console.error('Errore caricamento dati', e);
+      showToast('Errore nel caricamento dei dati');
+    }
+    loaded = true;
+    render();
+  }
+
+  async function saveData(){
+    if(!currentUserId) return;
+    try{
+      if(state.folders.length){
+        const folderRows = state.folders.map(f => ({ id: f.id, owner_id: currentUserId, nome: f.nome, parent_id: f.parentId || null }));
+        const { error } = await sb.from('folders').upsert(folderRows);
+        if(error){ console.error('Errore salvataggio cartelle', error); showToast('Errore nel salvare le cartelle'); }
+      }
+      if(state.schede.length){
+        const schedeRows = state.schede.map(s => ({
+          id: s.id, owner_id: currentUserId, folder_id: s.folderId || null,
+          nome: s.nome, note: s.note || '', esercizi: s.esercizi || []
+        }));
+        const { error } = await sb.from('schede').upsert(schedeRows);
+        if(error){ console.error('Errore salvataggio schede', error); showToast('Errore nel salvare la scheda'); }
+      }
+      if(state.customExercises.length){
+        const customRows = state.customExercises.map(c => ({
+          id: c.id, owner_id: currentUserId, nome: c.nome, muscoli: c.muscoli || [], esecuzione: c.esecuzione || ''
+        }));
+        const { error } = await sb.from('custom_exercises').upsert(customRows);
+        if(error){ console.error('Errore salvataggio esercizi personalizzati', error); showToast('Errore nel salvare gli esercizi personalizzati'); }
+      }
+      if(state.attrezzi.length){
+        const attrezziRows = state.attrezzi.map(a => ({ owner_id: currentUserId, nome: a }));
+        const { error } = await sb.from('attrezzi').upsert(attrezziRows, { onConflict: 'owner_id,nome' });
+        if(error){ console.error('Errore salvataggio attrezzi', error); showToast('Errore nel salvare gli attrezzi'); }
+      }
+    }catch(e){
+      console.error("Errore salvataggio dati", e);
+    }
+  }
+
+  function addAttrezzoGlobale(nome){
+    const pulito = nome.trim();
+    if(!pulito) return null;
+    const esiste = state.attrezzi.find(a => a.toLowerCase() === pulito.toLowerCase());
+    if(esiste) return esiste;
+    state.attrezzi.push(pulito);
+    state.attrezzi = sortAttrezzi(state.attrezzi);
+    saveData();
+    return pulito;
+  }
+
+  function removeAttrezzoGlobale(nome){
+    state.attrezzi = state.attrezzi.filter(a => a !== nome);
+    if(currentUserId){
+      sb.from('attrezzi').delete().eq('owner_id', currentUserId).eq('nome', nome)
+        .then(({ error }) => { if(error) console.error('Errore eliminazione attrezzo', error); });
+    }
+    saveData();
+  }
+
+  // Sostituisce window.confirm (non affidabile in ambienti sandboxed):
+  // primo click mostra una richiesta di conferma sul pulsante stesso,
+  // secondo click entro pochi secondi esegue l'azione.
+  function attachConfirmDelete(btn, confirmLabel, onConfirm){
+    const original = btn.innerHTML;
+    let timer = null;
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if(btn.dataset.confirming === '1'){
+        clearTimeout(timer);
+        onConfirm();
+      } else {
+        btn.dataset.confirming = '1';
+        btn.innerHTML = confirmLabel;
+        btn.classList.add('confirm-pending');
+        timer = setTimeout(() => {
+          btn.dataset.confirming = '';
+          btn.innerHTML = original;
+          btn.classList.remove('confirm-pending');
+        }, 3000);
+      }
+    });
+  }
+
+  function getCurrentScheda(){
+    return state.schede.find(s => s.id === state.currentId) || null;
+  }
+
+  function render(){
+    renderBreadcrumb();
+    renderFolders();
+    renderTabs();
+    renderScheda();
+  }
+
+  function getSubfolders(parentId){
+    return state.folders.filter(f => (f.parentId || null) === (parentId || null));
+  }
+
+  function getSchedeInFolder(folderId){
+    return state.schede.filter(s => (s.folderId || null) === (folderId || null));
+  }
+
+  function getFolderPath(folderId){
+    const path = [];
+    let current = state.folders.find(f => f.id === folderId);
+    while(current){
+      path.unshift(current);
+      current = state.folders.find(f => f.id === current.parentId);
+    }
+    return path;
+  }
+
+  function getDescendantFolderIds(folderId){
+    const ids = [folderId];
+    let changed = true;
+    while(changed){
+      changed = false;
+      state.folders.forEach(f => {
+        if(ids.includes(f.parentId) && !ids.includes(f.id)){
+          ids.push(f.id);
+          changed = true;
+        }
+      });
+    }
+    return ids;
+  }
+
+  function buildFolderOptionsHtml(currentFolderId){
+    function walk(parentId, depth){
+      let html = '';
+      getSubfolders(parentId).forEach(f => {
+        const prefix = '—'.repeat(depth) + (depth ? ' ' : '');
+        const selected = (currentFolderId || null) === f.id ? 'selected' : '';
+        html += `<option value="${escapeAttr(f.id)}" ${selected}>${prefix}${escapeHtml(f.nome)}</option>`;
+        html += walk(f.id, depth + 1);
+      });
+      return html;
+    }
+    const rootSelected = !currentFolderId ? 'selected' : '';
+    return `<option value="" ${rootSelected}>Nessuna cartella</option>` + walk(null, 1);
+  }
+
+  function renderBreadcrumb(){
+    const path = getFolderPath(state.currentFolderId);
+    const parts = [];
+    parts.push(`<span class="breadcrumb-item${!state.currentFolderId ? ' current' : ''}" data-folder="">Tutte le schede</span>`);
+    path.forEach(f => {
+      parts.push(`<span class="breadcrumb-sep">/</span>`);
+      const isCurrent = f.id === state.currentFolderId;
+      parts.push(`<span class="breadcrumb-item${isCurrent ? ' current' : ''}" data-folder="${escapeAttr(f.id)}">${escapeHtml(f.nome)}</span>`);
+    });
+    breadcrumbEl.innerHTML = parts.join('');
+    breadcrumbEl.querySelectorAll('.breadcrumb-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const folderId = item.dataset.folder || null;
+        if(folderId === state.currentFolderId) return;
+        state.currentFolderId = folderId;
+        const schedeQui = getSchedeInFolder(folderId);
+        state.currentId = schedeQui[0] ? schedeQui[0].id : null;
+        editMode = false;
+        saveData();
+        render();
+      });
+    });
+  }
+
+  function renderFolders(){
+    const subfolders = getSubfolders(state.currentFolderId);
+    const foldersLabelEl = document.getElementById('foldersLabel');
+    foldersLabelEl.style.display = subfolders.length ? 'block' : 'none';
+    foldersGridEl.innerHTML = '';
+    subfolders.forEach(f => {
+      const isEditing = editingFolderId === f.id;
+      const tile = document.createElement('div');
+      tile.className = 'folder-tile';
+      const contenuti = getSubfolders(f.id).length + getSchedeInFolder(f.id).length;
+      tile.innerHTML = `
+        <span class="folder-icon">&#128193;</span>
+        ${isEditing
+          ? `<input type="text" class="folder-tile-name-input" value="${escapeAttr(f.nome)}" />`
+          : `<button class="folder-tile-name">${escapeHtml(f.nome)}</button>`
+        }
+        <span class="folder-tile-count">${contenuti}</span>
+        <button class="folder-delete" title="Elimina cartella">&times;</button>
+      `;
+      if(isEditing){
+        const input = tile.querySelector('.folder-tile-name-input');
+        input.addEventListener('click', (e) => e.stopPropagation());
+        const commit = () => {
+          const val = input.value.trim();
+          f.nome = val || f.nome;
+          editingFolderId = null;
+          saveData();
+          render();
+        };
+        input.addEventListener('blur', commit);
+        input.addEventListener('keydown', (e) => {
+          if(e.key === 'Enter') commit();
+          if(e.key === 'Escape'){ editingFolderId = null; render(); }
+        });
+        setTimeout(() => { input.focus(); input.select(); }, 0);
+      } else {
+        tile.querySelector('.folder-tile-name').addEventListener('click', (e) => {
+          e.stopPropagation();
+          state.currentFolderId = f.id;
+          const schedeQui = getSchedeInFolder(f.id);
+          state.currentId = schedeQui[0] ? schedeQui[0].id : null;
+          editMode = false;
+          saveData();
+          render();
+        });
+        tile.addEventListener('dblclick', (e) => {
+          if(e.target.closest('.folder-delete')) return;
+          editingFolderId = f.id;
+          render();
+        });
+      }
+      attachConfirmDelete(tile.querySelector('.folder-delete'), 'Elimina?', () => {
+        const idsToRemove = getDescendantFolderIds(f.id);
+        const schedaCorrenteRimossa = state.schede.find(s => s.id === state.currentId && idsToRemove.includes(s.folderId));
+        const schedeIdsToDelete = state.schede.filter(s => idsToRemove.includes(s.folderId)).map(s => s.id);
+        state.folders = state.folders.filter(x => !idsToRemove.includes(x.id));
+        state.schede = state.schede.filter(s => !idsToRemove.includes(s.folderId));
+        if(idsToRemove.includes(state.currentFolderId)) state.currentFolderId = (f.parentId || null);
+        if(schedaCorrenteRimossa){
+          const schedeQui = getSchedeInFolder(state.currentFolderId);
+          state.currentId = schedeQui[0] ? schedeQui[0].id : null;
+        }
+        if(schedeIdsToDelete.length){
+          sb.from('schede').delete().in('id', schedeIdsToDelete)
+            .then(({ error }) => { if(error) console.error('Errore eliminazione schede della cartella', error); });
+        }
+        sb.from('folders').delete().in('id', idsToRemove)
+          .then(({ error }) => { if(error) console.error('Errore eliminazione cartella', error); });
+        saveData();
+        render();
+      });
+      foldersGridEl.appendChild(tile);
+    });
+  }
+
+  function renderTabs(){
+    const schedeQui = getSchedeInFolder(state.currentFolderId);
+    const tabsLabelEl = document.getElementById('tabsLabel');
+    tabsLabelEl.style.display = schedeQui.length ? 'block' : 'none';
+    const currentFolder = state.folders.find(f => f.id === state.currentFolderId);
+    tabsLabelEl.textContent = currentFolder ? `Schede in "${currentFolder.nome}"` : 'Schede';
+    tabsEl.innerHTML = "";
+    schedeQui.forEach(s => {
+      const tab = document.createElement('button');
+      tab.className = 'tab' + (s.id === state.currentId ? ' active' : '');
+      tab.textContent = s.nome;
+      tab.addEventListener('click', () => { state.currentId = s.id; editMode = false; saveData(); render(); });
+      tabsEl.appendChild(tab);
+    });
+  }
+
+  function renderScheda(){
+    schedaContainer.innerHTML = "";
+    const scheda = getCurrentScheda();
+
+    if(!scheda){
+      const empty = document.createElement('div');
+      empty.className = 'scheda-card empty';
+      empty.innerHTML = `
+        <div class="empty-title">Nessuna scheda ancora</div>
+        <p>Crea la tua prima scheda per iniziare ad aggiungere esercizi.</p>
+      `;
+      schedaContainer.appendChild(empty);
+      return;
+    }
+
+    const card = document.createElement('div');
+    card.className = 'scheda-card';
+
+    const isEditingNome = editingSchedaNomeId === scheda.id;
+    const folderOptionsHtml = buildFolderOptionsHtml(scheda.folderId);
+
+    const head = document.createElement('div');
+    head.className = 'scheda-head';
+    head.innerHTML = `
+      <div class="scheda-title-row">
+        <div class="scheda-name-row">
+          ${isEditingNome
+            ? `<input type="text" class="scheda-name-input" id="schedaNameInput" value="${escapeAttr(scheda.nome)}" />`
+            : `<span class="scheda-name" id="schedaNameDisplay" title="Clicca per rinominare">${escapeHtml(scheda.nome)}</span>`
           }
-          return response;
-        })
-        .catch(() => cached);
-      return cached || network;
-    })
-  );
-});
+        </div>
+        <span class="scheda-count">${scheda.esercizi.length} ESERCIZI</span>
+      </div>
+      <div class="scheda-toolbar">
+        <select class="btn btn-small" id="selSpostaCartella" title="Sposta in cartella">${folderOptionsHtml}</select>
+        <button class="btn btn-small" id="btnEsportaImmagine">Esporta immagine</button>
+        <button class="btn btn-small" id="btnEsportaPdf">Esporta PDF</button>
+        <button class="btn btn-ghost" id="btnEliminaScheda" title="Elimina scheda">Elimina scheda</button>
+      </div>
+    `;
+    card.appendChild(head);
+
+    if(isEditingNome){
+      const input = head.querySelector('#schedaNameInput');
+      const commitNome = () => {
+        const val = input.value.trim();
+        scheda.nome = val || scheda.nome;
+        editingSchedaNomeId = null;
+        saveData();
+        render();
+      };
+      input.addEventListener('blur', commitNome);
+      input.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter') commitNome();
+        if(e.key === 'Escape'){ editingSchedaNomeId = null; render(); }
+      });
+      setTimeout(() => { input.focus(); input.select(); }, 0);
+    } else {
+      head.querySelector('#schedaNameDisplay').addEventListener('click', () => {
+        editingSchedaNomeId = scheda.id;
+        render();
+      });
+    }
+
+    head.querySelector('#selSpostaCartella').addEventListener('change', (e) => {
+      scheda.folderId = e.target.value || null;
+      saveData();
+      render();
+    });
+
+    head.querySelector('#btnEsportaImmagine').addEventListener('click', () => esportaSchedaComeImmagine(scheda));
+    head.querySelector('#btnEsportaPdf').addEventListener('click', () => esportaSchedaComePdf(scheda));
+
+    if(editMode || scheda.note){
+      const noteBlock = document.createElement('div');
+      noteBlock.className = 'scheda-note-block';
+      noteBlock.innerHTML = `
+        <div class="scheda-note-label">Note scheda</div>
+        ${editMode
+          ? `<textarea class="scheda-note-textarea" id="schedaNoteInput" placeholder="Note generali per questa scheda...">${escapeHtml(scheda.note || '')}</textarea>`
+          : `<div class="scheda-note-text">${escapeHtml(scheda.note)}</div>`
+        }
+      `;
+      card.appendChild(noteBlock);
+      if(editMode){
+        const noteInput = noteBlock.querySelector('#schedaNoteInput');
+        noteInput.addEventListener('change', () => {
+          scheda.note = noteInput.value.trim();
+          saveData();
+        });
+      }
+    }
+
+    const list = document.createElement('div');
+    list.className = 'ex-list';
+
+    if(scheda.esercizi.length === 0){
+      const emptyList = document.createElement('div');
+      emptyList.className = 'empty';
+      emptyList.innerHTML = `<p>Ancora nessun esercizio in questa scheda.</p>`;
+      list.appendChild(emptyList);
+    }
+
+    ensureNumeri(scheda);
+    sortEsercizi(scheda);
+    const groupColorMap = getGroupColorMap(scheda);
+
+    scheda.esercizi.forEach((ex, idx) => {
+      const row = document.createElement('div');
+      row.className = 'ex-row' + (ex.open ? ' open' : '');
+      row.dataset.exId = ex.id;
+
+      const color = groupColorMap[ex.numero] || '#8B8D93';
+      const isEditingNumero = editingNumeroExId === ex.id;
+
+      const main = document.createElement('div');
+      main.className = 'ex-row-main';
+      main.innerHTML = `
+        ${editMode ? `<span class="ex-drag-handle" title="Trascina per riordinare">&#8942;&#8942;</span>` : ''}
+        ${editMode && isEditingNumero
+          ? `<input type="text" class="ex-num-input" value="${escapeAttr(ex.numero)}" />`
+          : `<span class="ex-num-pill" style="background:${hexToRgba(color,0.16)}; border-color:${color}; color:${color};" ${editMode ? 'title="Clicca per modificare (usa lo stesso numero per un superset)"' : ''}>${escapeHtml(ex.numero)}</span>`
+        }
+        <button class="ex-name-btn-thin">${escapeHtml(ex.nome)}</button>
+        <span class="ex-stats-pill">${escapeHtml(formatStatsInline(ex))}</span>
+        ${editMode ? `<button class="btn btn-ghost" title="Rimuovi esercizio">&times;</button>` : ''}
+      `;
+
+      const dragHandle = main.querySelector('.ex-drag-handle');
+      if(dragHandle) dragHandle.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        try { dragHandle.setPointerCapture(e.pointerId); } catch(err) {}
+        const startY = e.clientY;
+        let currentTargetRow = null;
+        row.classList.add('dragging');
+        row.style.pointerEvents = 'none';
+
+        function onMove(ev){
+          const dy = ev.clientY - startY;
+          row.style.transform = `translateY(${dy}px)`;
+          const elUnder = document.elementFromPoint(ev.clientX, ev.clientY);
+          const targetRow = elUnder ? elUnder.closest('.ex-row') : null;
+          if(currentTargetRow && currentTargetRow !== targetRow){
+            currentTargetRow.classList.remove('drag-over');
+            currentTargetRow = null;
+          }
+          if(targetRow && targetRow !== row){
+            targetRow.classList.add('drag-over');
+            currentTargetRow = targetRow;
+          }
+        }
+
+        function onUp(){
+          document.removeEventListener('pointermove', onMove);
+          document.removeEventListener('pointerup', onUp);
+          row.classList.remove('dragging');
+          row.style.transform = '';
+          row.style.pointerEvents = '';
+          if(currentTargetRow){
+            currentTargetRow.classList.remove('drag-over');
+            const targetId = currentTargetRow.dataset.exId;
+            const fromIndex = scheda.esercizi.findIndex(x => x.id === ex.id);
+            const toIndex = scheda.esercizi.findIndex(x => x.id === targetId);
+            if(fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex){
+              const [moved] = scheda.esercizi.splice(fromIndex, 1);
+              scheda.esercizi.splice(toIndex, 0, moved);
+              saveData();
+            }
+          }
+          render();
+        }
+
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
+      });
+
+      if(editMode && isEditingNumero){
+        const input = main.querySelector('.ex-num-input');
+        input.addEventListener('click', (e) => e.stopPropagation());
+        const commitNumero = () => {
+          const val = input.value.trim();
+          ex.numero = val || ex.numero;
+          editingNumeroExId = null;
+          saveData();
+          render();
+        };
+        input.addEventListener('blur', commitNumero);
+        input.addEventListener('keydown', (e) => {
+          if(e.key === 'Enter') commitNumero();
+          if(e.key === 'Escape'){ editingNumeroExId = null; render(); }
+        });
+        setTimeout(() => { input.focus(); input.select(); }, 0);
+      } else if(editMode){
+        main.querySelector('.ex-num-pill').addEventListener('click', (e) => {
+          e.stopPropagation();
+          editingNumeroExId = ex.id;
+          render();
+        });
+      }
+
+      const nameBtn = main.querySelector('.ex-name-btn-thin');
+      nameBtn.addEventListener('click', () => {
+        ex.open = !ex.open;
+        render();
+      });
+
+      const removeBtn = main.querySelector('.btn-ghost');
+      if(removeBtn) removeBtn.addEventListener('click', () => {
+        scheda.esercizi = scheda.esercizi.filter(e => e !== ex);
+        saveData();
+        render();
+      });
+
+      row.appendChild(main);
+
+      const detail = document.createElement('div');
+      detail.className = 'ex-detail';
+
+      if(editMode){
+        detail.innerHTML = `
+          <div class="ex-detail-inner">
+            <div class="stat-row">
+              <div class="stat stat-narrow">
+                <div class="stat-label">Serie</div>
+                <input class="stat-input" type="text" data-field="serie" value="${escapeAttr(ex.serie)}" placeholder="—" />
+              </div>
+              <div class="stat stat-narrow">
+                <div class="stat-label">Rip.</div>
+                <input class="stat-input" type="text" data-field="ripetizioni" value="${escapeAttr(ex.ripetizioni)}" placeholder="—" />
+              </div>
+              <div class="stat stat-narrow">
+                <div class="stat-label">Rec.</div>
+                <input class="stat-input" type="text" data-field="recupero" value="${escapeAttr(ex.recupero)}" placeholder="—" />
+              </div>
+            </div>
+            ${buildCarichiPerSetHtml(ex)}
+            <div>
+              <div class="ex-detail-label">Come si esegue</div>
+              <textarea class="detail-textarea" data-field="esecuzione" placeholder="Descrivi l'esecuzione...">${escapeHtml(ex.esecuzione || '')}</textarea>
+            </div>
+            <div>
+              <div class="ex-detail-label">Muscoli coinvolti</div>
+              <div class="muscle-grid ex-muscle-grid">
+                ${MUSCLE_OPTIONS.map(m => `<span class="muscle-chip${ex.muscoli.includes(m)?' selected':''}" data-m="${m}">${m}</span>`).join('')}
+              </div>
+            </div>
+            <div>
+              <div class="ex-detail-label">Attrezzi</div>
+              <div class="attrezzi-grid ex-attrezzi-grid">
+                ${state.attrezzi.map(a => `
+                  <span class="attrezzo-chip${ex.attrezzi.includes(a)?' selected':''}" data-a="${escapeAttr(a)}">
+                    <span class="attrezzo-label" data-a="${escapeAttr(a)}">${escapeHtml(a)}</span>
+                    <button type="button" class="attrezzo-remove" data-a="${escapeAttr(a)}" title="Rimuovi dall'elenco attrezzi">&times;</button>
+                  </span>
+                `).join('')}
+              </div>
+              <button type="button" class="attrezzo-add-btn ex-attrezzo-add-btn">+</button>
+              <div class="attrezzo-add-row ex-attrezzo-add-row" style="display:${addingAttrezzoExId===ex.id?'flex':'none'};">
+                <input type="text" class="ex-attrezzo-add-input" placeholder="Nome nuovo attrezzo" />
+                <button type="button" class="btn btn-small btn-primary ex-attrezzo-add-confirm">Aggiungi</button>
+              </div>
+            </div>
+            <div>
+              <div class="ex-detail-label">Note</div>
+              <textarea class="detail-textarea" data-field="note" placeholder="Note per questo esercizio...">${escapeHtml(ex.note || '')}</textarea>
+            </div>
+          </div>
+        `;
+
+        detail.querySelectorAll('.stat-input, .detail-textarea').forEach(input => {
+          input.addEventListener('click', (e) => e.stopPropagation());
+          input.addEventListener('change', () => {
+            ex[input.dataset.field] = input.value.trim();
+            saveData();
+            if(input.dataset.field === 'serie'){
+              ensureCarichiArray(ex);
+              render();
+            }
+          });
+        });
+
+        detail.querySelectorAll('.ex-muscle-grid .muscle-chip').forEach(chip => {
+          chip.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const m = chip.dataset.m;
+            if(ex.muscoli.includes(m)) ex.muscoli = ex.muscoli.filter(x => x !== m);
+            else ex.muscoli.push(m);
+            chip.classList.toggle('selected');
+            saveData();
+          });
+        });
+
+        detail.querySelectorAll('.ex-attrezzi-grid .attrezzo-label').forEach(label => {
+          label.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const a = label.dataset.a;
+            if(ex.attrezzi.includes(a)) ex.attrezzi = ex.attrezzi.filter(x => x !== a);
+            else ex.attrezzi.push(a);
+            const chip = label.closest('.attrezzo-chip');
+            if(chip) chip.classList.toggle('selected', ex.attrezzi.includes(a));
+            saveData();
+          });
+        });
+        detail.querySelectorAll('.ex-attrezzi-grid .attrezzo-remove').forEach(btn => {
+          btn.addEventListener('click', (e) => e.stopPropagation());
+          attachConfirmDelete(btn, 'Elimina?', () => {
+            const a = btn.dataset.a;
+            removeAttrezzoGlobale(a);
+            ex.attrezzi = ex.attrezzi.filter(x => x !== a);
+            render();
+          });
+        });
+        const addBtn = detail.querySelector('.ex-attrezzo-add-btn');
+        addBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          addingAttrezzoExId = ex.id;
+          render();
+        });
+        const addRow = detail.querySelector('.ex-attrezzo-add-row');
+        const addInput = detail.querySelector('.ex-attrezzo-add-input');
+        const addConfirm = detail.querySelector('.ex-attrezzo-add-confirm');
+        if(addingAttrezzoExId === ex.id){
+          addInput.addEventListener('click', (e) => e.stopPropagation());
+          const confirmAdd = () => {
+            const nome = addInput.value.trim();
+            if(!nome) return;
+            const salvato = addAttrezzoGlobale(nome);
+            if(salvato && !ex.attrezzi.includes(salvato)) ex.attrezzi.push(salvato);
+            addingAttrezzoExId = null;
+            render();
+          };
+          addConfirm.addEventListener('click', (e) => { e.stopPropagation(); confirmAdd(); });
+          addInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') confirmAdd(); });
+          setTimeout(() => addInput.focus(), 0);
+        }
+      } else {
+        detail.innerHTML = `
+          <div class="ex-detail-inner">
+            <div class="stat-row">
+              <div class="stat stat-narrow"><div class="stat-label">Serie</div><div class="stat-value">${escapeHtml(ex.serie || '—')}</div></div>
+              <div class="stat stat-narrow"><div class="stat-label">Rip.</div><div class="stat-value">${escapeHtml(ex.ripetizioni || '—')}</div></div>
+              <div class="stat stat-narrow"><div class="stat-label">Rec.</div><div class="stat-value">${escapeHtml(ex.recupero || '—')}</div></div>
+            </div>
+            ${buildCarichiPerSetHtml(ex)}
+            <div>
+              <div class="ex-detail-label">Come si esegue</div>
+              <div class="ex-detail-text">${escapeHtml(ex.esecuzione || 'Descrizione non disponibile.')}</div>
+            </div>
+            <div>
+              <div class="ex-detail-label">Muscoli coinvolti</div>
+              <div class="ex-detail-tags">${ex.muscoli.map(m=>`<span class="tag">${escapeHtml(m)}</span>`).join('')}</div>
+            </div>
+            ${ex.attrezzi && ex.attrezzi.length ? `<div><div class="ex-detail-label">Attrezzi</div><div class="attrezzi-badges">${ex.attrezzi.map(a=>`<span class="attrezzo-badge">${escapeHtml(a)}</span>`).join('')}</div></div>` : ''}
+            ${ex.note ? `<div><div class="ex-detail-label">Note</div><div class="ex-note-text">${escapeHtml(ex.note)}</div></div>` : ''}
+          </div>
+        `;
+      }
+
+      detail.querySelectorAll('.carico-input').forEach(input => {
+        input.addEventListener('click', (e) => e.stopPropagation());
+        input.addEventListener('change', () => {
+          const idx = parseInt(input.dataset.index, 10);
+          if(!Array.isArray(ex.carichi)) ex.carichi = [];
+          ex.carichi[idx] = input.value.trim();
+          saveData();
+        });
+      });
+
+      row.appendChild(detail);
+
+      list.appendChild(row);
+    });
+
+    card.appendChild(list);
+
+    const modeBar = document.createElement('div');
+    modeBar.className = 'mode-bar';
+    if(editMode){
+      modeBar.innerHTML = `
+        <button class="btn" id="btnAggiungiEsercizio">+ Aggiungi esercizio</button>
+        <button class="btn btn-primary" id="btnSalvaModifiche">Salva modifiche</button>
+      `;
+    } else {
+      modeBar.innerHTML = `<button class="btn btn-primary" id="btnModificaScheda">Modifica scheda</button>`;
+    }
+    card.appendChild(modeBar);
+
+    schedaContainer.appendChild(card);
+
+    attachConfirmDelete(document.getElementById('btnEliminaScheda'), 'Conferma eliminazione', () => eliminaScheda(scheda));
+
+    if(editMode){
+      document.getElementById('btnAggiungiEsercizio').addEventListener('click', () => openAggiungiEsercizioModal(scheda));
+      document.getElementById('btnSalvaModifiche').addEventListener('click', () => {
+        editMode = false;
+        editingNumeroExId = null;
+        addingAttrezzoExId = null;
+        saveData();
+        render();
+      });
+    } else {
+      document.getElementById('btnModificaScheda').addEventListener('click', () => {
+        editMode = true;
+        render();
+      });
+    }
+  }
+
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  function escapeAttr(str){
+    return String(str == null ? '' : str)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#39;');
+  }
+
+  function eliminaScheda(scheda){
+    state.schede = state.schede.filter(s => s.id !== scheda.id);
+    state.currentId = state.schede[0] ? state.schede[0].id : null;
+    sb.from('schede').delete().eq('id', scheda.id)
+      .then(({ error }) => { if(error) console.error('Errore eliminazione scheda', error); });
+    saveData();
+    render();
+  }
+
+  function showToast(msg){
+    let toast = document.getElementById('gymToast');
+    if(!toast){
+      toast = document.createElement('div');
+      toast.id = 'gymToast';
+      toast.className = 'gym-toast';
+      app.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.classList.add('visible');
+    clearTimeout(toast._hideTimer);
+    toast._hideTimer = setTimeout(() => toast.classList.remove('visible'), 2800);
+  }
+
+  function prepareExportClone(){
+    const original = schedaContainer.querySelector('.scheda-card');
+    if(!original) return null;
+    const cardClone = original.cloneNode(true);
+    cardClone.querySelectorAll('.ex-drag-handle, .btn-ghost, #btnEsportaImmagine, #btnEsportaPdf, #selSpostaCartella, #btnAggiungiEsercizio, .mode-bar').forEach(el => el.remove());
+    cardClone.querySelectorAll('.ex-detail').forEach(d => d.remove());
+    cardClone.querySelectorAll('.scheda-note-textarea').forEach(textarea => {
+      const div = document.createElement('div');
+      div.className = 'scheda-note-text';
+      div.textContent = textarea.value || '';
+      textarea.replaceWith(div);
+    });
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'gym-app';
+    wrapper.style.width = '560px';
+    wrapper.appendChild(cardClone);
+    return wrapper;
+  }
+
+  function sanitizeFileName(nome){
+    return (nome || 'scheda').trim().replace(/[^a-z0-9]+/gi, '_') || 'scheda';
+  }
+
+  function showExportResultModal(tipo, dataUrl, filename){
+    modalRoot.innerHTML = `
+      <div class="overlay" id="ovExport">
+        <div class="modal">
+          <h3>${tipo === 'immagine' ? 'Immagine pronta' : 'PDF pronto'}</h3>
+          <p style="font-size:13px; color:var(--text-muted); margin:0 0 14px;">Safari e alcuni browser bloccano il download automatico: tocca il pulsante qui sotto per aprire o salvare il file tu stesso.</p>
+          ${tipo === 'immagine' ? `<img src="${dataUrl}" style="width:100%; border-radius:8px; border:1px solid var(--border); margin-bottom:14px; display:block;" />` : ''}
+          <div class="modal-actions">
+            <button class="btn" id="btnChiudiExport">Chiudi</button>
+            <a class="btn btn-primary" href="${dataUrl}" download="${filename}" target="_blank" rel="noopener">${tipo === 'immagine' ? 'Scarica immagine' : 'Apri / Scarica PDF'}</a>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('btnChiudiExport').addEventListener('click', closeModal);
+    document.getElementById('ovExport').addEventListener('click', (e) => { if(e.target.id === 'ovExport') closeModal(); });
+  }
+
+  async function esportaSchedaComeImmagine(scheda){
+    if(typeof html2canvas === 'undefined'){ showToast('Libreria di esportazione non disponibile'); return; }
+    const clone = prepareExportClone();
+    if(!clone) return;
+    clone.style.position = 'fixed';
+    clone.style.top = '0';
+    clone.style.left = '-10000px';
+    document.body.appendChild(clone);
+    showToast('Generazione immagine...');
+    try{
+      const canvas = await html2canvas(clone, { backgroundColor: '#18191B', scale: 2 });
+      const dataUrl = canvas.toDataURL('image/png');
+      showExportResultModal('immagine', dataUrl, `${sanitizeFileName(scheda.nome)}.png`);
+    }catch(e){
+      console.error('Errore esportazione immagine', e);
+      showToast('Esportazione immagine non riuscita');
+    }finally{
+      clone.remove();
+    }
+  }
+
+  async function esportaSchedaComePdf(scheda){
+    if(typeof html2canvas === 'undefined' || !window.jspdf){ showToast('Libreria di esportazione non disponibile'); return; }
+    const clone = prepareExportClone();
+    if(!clone) return;
+    clone.style.position = 'fixed';
+    clone.style.top = '0';
+    clone.style.left = '-10000px';
+    document.body.appendChild(clone);
+    showToast('Generazione PDF...');
+    try{
+      const canvas = await html2canvas(clone, { backgroundColor: '#18191B', scale: 2 });
+      const imgData = canvas.toDataURL('image/png');
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: canvas.width >= canvas.height ? 'landscape' : 'portrait', unit: 'px', format: [canvas.width, canvas.height] });
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      const dataUrl = pdf.output('datauristring');
+      showExportResultModal('pdf', dataUrl, `${sanitizeFileName(scheda.nome)}.pdf`);
+    }catch(e){
+      console.error('Errore esportazione PDF', e);
+      showToast('Esportazione PDF non riuscita');
+    }finally{
+      clone.remove();
+    }
+  }
+
+  function closeModal(){ modalRoot.innerHTML = ""; }
+
+  function openNuovaSchedaModal(){
+    modalRoot.innerHTML = `
+      <div class="overlay" id="ovNuova">
+        <div class="modal">
+          <h3>Nuova scheda</h3>
+          <div class="field">
+            <label>Nome scheda</label>
+            <input type="text" id="inputNomeScheda" placeholder="Es. Scheda Petto/Tricipiti" />
+          </div>
+          <div class="modal-actions">
+            <button class="btn" id="btnAnnullaNuova">Annulla</button>
+            <button class="btn btn-primary" id="btnCreaScheda">Crea scheda</button>
+          </div>
+        </div>
+      </div>
+    `;
+    const input = document.getElementById('inputNomeScheda');
+    input.focus();
+    document.getElementById('btnAnnullaNuova').addEventListener('click', closeModal);
+    document.getElementById('ovNuova').addEventListener('click', (e) => { if(e.target.id === 'ovNuova') closeModal(); });
+    const crea = () => {
+      const nome = input.value.trim();
+      if(!nome) return;
+      const nuova = { id: uid(), nome, esercizi: [], folderId: state.currentFolderId || null, note: '' };
+      state.schede.push(nuova);
+      state.currentId = nuova.id;
+      saveData();
+      closeModal();
+      render();
+    };
+    document.getElementById('btnCreaScheda').addEventListener('click', crea);
+    input.addEventListener('keydown', (e) => { if(e.key === 'Enter') crea(); });
+  }
+
+  function openAggiungiEsercizioModal(scheda){
+    const modalState = {
+      categoria: '',
+      selectedIndex: '',
+      selectedCustomId: '__new__',
+      nome: '',
+      esecuzione: '',
+      muscoli: [],
+      serie: '',
+      ripetizioni: '',
+      recupero: '',
+      attrezzi: [],
+      showAddAttrezzo: false,
+      customDropdownOpen: false,
+      searchQuery: '',
+      searchOpen: false
+    };
+
+    function getSearchResults(query){
+      const libItems = LIBRARY.map((ex, i) => ({ kind: 'library', index: i, nome: ex.nome, categoriaLabel: CATEGORIE[ex.categoria] }));
+      const customItems = state.customExercises.map(c => ({ kind: 'custom', id: c.id, nome: c.nome, categoriaLabel: CATEGORIE.personalizzato }));
+      const q = query.toLowerCase();
+      const filtered = libItems.concat(customItems).filter(item => item.nome.toLowerCase().includes(q));
+      filtered.sort((a,b) => {
+        const aStarts = a.nome.toLowerCase().startsWith(q) ? 0 : 1;
+        const bStarts = b.nome.toLowerCase().startsWith(q) ? 0 : 1;
+        if(aStarts !== bStarts) return aStarts - bStarts;
+        return a.nome.localeCompare(b.nome, 'it');
+      });
+      return filtered.slice(0, 8);
+    }
+
+    function searchRowHtml(r){
+      const dataAttr = r.kind === 'library' ? `data-kind="library" data-index="${r.index}"` : `data-kind="custom" data-id="${escapeAttr(r.id)}"`;
+      return `
+        <div class="custom-ex-row search-result-row" ${dataAttr}>
+          <span class="custom-ex-name">${escapeHtml(r.nome)}</span>
+          <span class="category-tag">${escapeHtml(r.categoriaLabel)}</span>
+        </div>
+      `;
+    }
+
+    function applySearchSelection(kind, val){
+      if(kind === 'library'){
+        const ex = LIBRARY[parseInt(val)];
+        if(!ex) return;
+        modalState.categoria = ex.categoria;
+        modalState.selectedIndex = String(LIBRARY.indexOf(ex));
+        modalState.selectedCustomId = '__new__';
+        modalState.nome = ex.nome;
+        modalState.esecuzione = ex.esecuzione;
+        modalState.muscoli = [...ex.muscoli];
+      } else {
+        const custom = state.customExercises.find(c => c.id === val);
+        if(!custom) return;
+        modalState.categoria = 'personalizzato';
+        modalState.selectedIndex = '';
+        modalState.selectedCustomId = custom.id;
+        modalState.nome = custom.nome;
+        modalState.esecuzione = custom.esecuzione;
+        modalState.muscoli = [...custom.muscoli];
+      }
+      modalState.searchQuery = '';
+      modalState.searchOpen = false;
+      renderModal();
+    }
+
+    function attachSearchRowListeners(panel){
+      panel.querySelectorAll('.search-result-row').forEach(row => {
+        row.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          const kind = row.dataset.kind;
+          const val = kind === 'library' ? row.dataset.index : row.dataset.id;
+          applySearchSelection(kind, val);
+        });
+      });
+    }
+
+    function updateSearchPanel(){
+      const panel = document.getElementById('searchPanel');
+      const dropdown = document.getElementById('searchDropdown');
+      if(!panel || !dropdown) return;
+      const query = modalState.searchQuery.trim();
+      if(!query){
+        panel.style.display = 'none';
+        dropdown.classList.remove('open');
+        return;
+      }
+      const results = getSearchResults(query);
+      panel.innerHTML = results.length ? results.map(searchRowHtml).join('') : `<div class="custom-ex-empty">Nessun esercizio trovato.</div>`;
+      panel.style.display = 'block';
+      dropdown.classList.add('open');
+      attachSearchRowListeners(panel);
+    }
+
+    function syncFieldsFromDom(){
+      const nomeI = document.getElementById('inputExNome');
+      const esecI = document.getElementById('inputExEsec');
+      const serieI = document.getElementById('inputExSerie');
+      const ripI = document.getElementById('inputExRip');
+      const recI = document.getElementById('inputExRecupero');
+      if(nomeI) modalState.nome = nomeI.value;
+      if(esecI) modalState.esecuzione = esecI.value;
+      if(serieI) modalState.serie = serieI.value;
+      if(ripI) modalState.ripetizioni = ripI.value;
+      if(recI) modalState.recupero = recI.value;
+    }
+
+    function buildCategoriaOptions(){
+      const opts = [
+        ['', '— Seleziona categoria —'],
+        ['palestra', 'Pesi'],
+        ['corpolibero', 'Corpo libero'],
+        ['kettlebell', 'Kettlebell'],
+        ['personalizzato', 'Personalizzato']
+      ];
+      return opts.map(([val,label]) => `<option value="${val}" ${modalState.categoria===val?'selected':''}>${label}</option>`).join('');
+    }
+
+    function buildEsercizioSelectHtml(){
+      if(modalState.categoria === ''){
+        return `
+          <div class="field">
+            <label>Esercizio</label>
+            <select disabled><option>— Scegli prima una categoria —</option></select>
+          </div>
+        `;
+      }
+      if(modalState.categoria === 'personalizzato'){
+        const selected = state.customExercises.find(c => c.id === modalState.selectedCustomId);
+        const selectedLabel = modalState.selectedCustomId === '__new__' || !selected
+          ? '+ Nuovo esercizio personalizzato'
+          : selected.nome;
+        const rows = state.customExercises.map(c => `
+          <div class="custom-ex-row${modalState.selectedCustomId===c.id?' selected':''}" data-id="${escapeAttr(c.id)}">
+            <span class="custom-ex-name">${escapeHtml(c.nome)}</span>
+            <button type="button" class="custom-ex-delete" data-id="${escapeAttr(c.id)}" title="Elimina dal menu">&times;</button>
+          </div>
+        `).join('') || `<div class="custom-ex-empty">Nessun esercizio personalizzato salvato ancora.</div>`;
+        return `
+          <div class="field">
+            <label>Esercizio personalizzato</label>
+            <div class="dropdown${modalState.customDropdownOpen?' open':''}" id="customExDropdown">
+              <button type="button" class="dropdown-trigger" id="customExTrigger">
+                <span>${escapeHtml(selectedLabel)}</span>
+                <span class="dropdown-arrow">&#9662;</span>
+              </button>
+              <div class="dropdown-panel" id="customExPanel" style="display:${modalState.customDropdownOpen ? 'block' : 'none'};">
+                <div class="custom-ex-row new-row${modalState.selectedCustomId==='__new__'?' selected':''}" data-id="__new__">
+                  <span class="custom-ex-name">+ Nuovo esercizio personalizzato</span>
+                </div>
+                ${rows}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      const items = LIBRARY.map((ex,i) => ({ ex, i })).filter(o => o.ex.categoria === modalState.categoria);
+      const opts = items.map(o => `<option value="${o.i}" ${String(modalState.selectedIndex)===String(o.i)?'selected':''}>${escapeHtml(o.ex.nome)}</option>`).join('');
+      return `
+        <div class="field">
+          <label>Esercizio</label>
+          <select id="selEsercizio">
+            <option value="" ${modalState.selectedIndex===''?'selected':''}>— Seleziona esercizio —</option>
+            ${opts}
+          </select>
+        </div>
+      `;
+    }
+
+    function buildDetailSectionHtml(){
+      return `
+        <div class="field">
+          <label>Nome esercizio</label>
+          <input type="text" id="inputExNome" placeholder="Es. Rematore con manubrio" value="${escapeAttr(modalState.nome)}" />
+        </div>
+        <div class="field">
+          <label>Muscoli coinvolti</label>
+          <div class="muscle-grid" id="muscleGrid">
+            ${MUSCLE_OPTIONS.map(m => `<span class="muscle-chip${modalState.muscoli.includes(m)?' selected':''}" data-m="${m}">${m}</span>`).join('')}
+          </div>
+        </div>
+        <div class="field">
+          <label>Come si esegue (breve descrizione)</label>
+          <textarea id="inputExEsec" placeholder="Descrivi in poche righe l'esecuzione...">${escapeHtml(modalState.esecuzione)}</textarea>
+        </div>
+        <div class="field">
+          <button type="button" class="btn btn-small" id="btnSalvaLibreria">+ Salva questo esercizio nel menu</button>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Serie</label>
+            <input type="text" id="inputExSerie" placeholder="Es. 3" value="${escapeAttr(modalState.serie)}" />
+          </div>
+          <div class="field">
+            <label>Ripetizioni</label>
+            <input type="text" id="inputExRip" placeholder="Es. 10-12" value="${escapeAttr(modalState.ripetizioni)}" />
+          </div>
+          <div class="field">
+            <label>Recupero</label>
+            <input type="text" id="inputExRecupero" placeholder="Es. 90 sec" value="${escapeAttr(modalState.recupero)}" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Attrezzi</label>
+          <div class="attrezzi-grid" id="attrezziGrid">
+            ${state.attrezzi.map(a => `
+              <span class="attrezzo-chip${modalState.attrezzi.includes(a)?' selected':''}" data-a="${escapeAttr(a)}">
+                <span class="attrezzo-label" data-a="${escapeAttr(a)}">${escapeHtml(a)}</span>
+                <button type="button" class="attrezzo-remove" data-a="${escapeAttr(a)}" title="Rimuovi dall'elenco attrezzi">&times;</button>
+              </span>
+            `).join('')}
+          </div>
+          <button type="button" class="attrezzo-add-btn" id="btnMostraAggiungiAttrezzo">+</button>
+          <div class="attrezzo-add-row" id="attrezzoAddRow" style="display:${modalState.showAddAttrezzo ? 'flex' : 'none'};">
+            <input type="text" id="inputNuovoAttrezzo" placeholder="Nome nuovo attrezzo" />
+            <button type="button" class="btn btn-small btn-primary" id="btnConfermaAttrezzo">Aggiungi</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderModal(){
+      const prevModalEl = modalRoot.querySelector('.modal');
+      const prevScrollTop = prevModalEl ? prevModalEl.scrollTop : 0;
+      modalRoot.innerHTML = `
+        <div class="overlay" id="ovEx">
+          <div class="modal">
+            <h3>Aggiungi esercizio</h3>
+            <div class="field select-group">
+              <label>Cerca esercizio</label>
+              <div class="dropdown" id="searchDropdown">
+                <input type="text" id="inputSearch" placeholder="Es. panca, squat, swing..." value="${escapeAttr(modalState.searchQuery)}" autocomplete="off" />
+                <div class="dropdown-panel" id="searchPanel" style="display:${modalState.searchOpen && modalState.searchQuery.trim() ? 'block' : 'none'};">
+                  ${modalState.searchOpen && modalState.searchQuery.trim() ? getSearchResults(modalState.searchQuery.trim()).map(searchRowHtml).join('') || `<div class="custom-ex-empty">Nessun esercizio trovato.</div>` : ''}
+                </div>
+              </div>
+            </div>
+            <div class="search-divider">oppure scegli manualmente</div>
+            <div class="field select-group">
+              <label>Categoria</label>
+              <select id="selCategoria">${buildCategoriaOptions()}</select>
+            </div>
+            ${buildEsercizioSelectHtml()}
+            ${buildDetailSectionHtml()}
+            <div class="modal-actions">
+              <button class="btn" id="btnAnnullaEx">Annulla</button>
+              <button class="btn btn-primary" id="btnSalvaEx">Aggiungi alla scheda</button>
+            </div>
+          </div>
+        </div>
+      `;
+      attachListeners();
+      const newModalEl = modalRoot.querySelector('.modal');
+      if(newModalEl) newModalEl.scrollTop = prevScrollTop;
+    }
+
+    function attachListeners(){
+      document.getElementById('ovEx').addEventListener('click', (e) => { if(e.target.id === 'ovEx') closeModal(); });
+      document.getElementById('btnAnnullaEx').addEventListener('click', closeModal);
+
+      const inputSearch = document.getElementById('inputSearch');
+      if(inputSearch){
+        inputSearch.addEventListener('input', () => {
+          modalState.searchQuery = inputSearch.value;
+          modalState.searchOpen = true;
+          updateSearchPanel();
+        });
+        inputSearch.addEventListener('focus', () => {
+          modalState.searchOpen = true;
+          updateSearchPanel();
+        });
+        inputSearch.addEventListener('keydown', (e) => {
+          if(e.key === 'Enter'){
+            const query = modalState.searchQuery.trim();
+            if(!query) return;
+            const results = getSearchResults(query);
+            if(results.length){
+              applySearchSelection(results[0].kind, results[0].kind === 'library' ? String(results[0].index) : results[0].id);
+            }
+          }
+          if(e.key === 'Escape'){
+            modalState.searchOpen = false;
+            updateSearchPanel();
+          }
+        });
+      }
+
+      const selCategoria = document.getElementById('selCategoria');
+      selCategoria.addEventListener('change', () => {
+        modalState.categoria = selCategoria.value;
+        modalState.selectedIndex = '';
+        modalState.selectedCustomId = '__new__';
+        modalState.nome = '';
+        modalState.esecuzione = '';
+        modalState.muscoli = [];
+        renderModal();
+      });
+
+      const selEsercizio = document.getElementById('selEsercizio');
+      if(selEsercizio){
+        selEsercizio.addEventListener('change', () => {
+          modalState.selectedIndex = selEsercizio.value;
+          if(selEsercizio.value !== ''){
+            const ex = LIBRARY[parseInt(selEsercizio.value)];
+            modalState.nome = ex.nome;
+            modalState.esecuzione = ex.esecuzione;
+            modalState.muscoli = [...ex.muscoli];
+          } else {
+            modalState.nome = ''; modalState.esecuzione = ''; modalState.muscoli = [];
+          }
+          renderModal();
+        });
+      }
+
+      const customExTrigger = document.getElementById('customExTrigger');
+      const customExPanel = document.getElementById('customExPanel');
+      const customExDropdown = document.getElementById('customExDropdown');
+      if(customExTrigger && customExPanel && customExDropdown){
+        customExTrigger.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isOpen = customExPanel.style.display === 'block';
+          customExPanel.style.display = isOpen ? 'none' : 'block';
+          customExDropdown.classList.toggle('open', !isOpen);
+          modalState.customDropdownOpen = !isOpen;
+        });
+        customExPanel.querySelectorAll('.custom-ex-row').forEach(row => {
+          row.addEventListener('click', (e) => {
+            if(e.target.closest('.custom-ex-delete')) return;
+            const id = row.dataset.id;
+            modalState.selectedCustomId = id;
+            modalState.customDropdownOpen = false;
+            if(id === '__new__'){
+              modalState.nome = ''; modalState.esecuzione = ''; modalState.muscoli = [];
+            } else {
+              const custom = state.customExercises.find(c => c.id === id);
+              if(custom){
+                modalState.nome = custom.nome;
+                modalState.esecuzione = custom.esecuzione;
+                modalState.muscoli = [...custom.muscoli];
+              }
+            }
+            renderModal();
+          });
+        });
+        customExPanel.querySelectorAll('.custom-ex-delete').forEach(btn => {
+          attachConfirmDelete(btn, 'Elimina?', () => {
+            const id = btn.dataset.id;
+            state.customExercises = state.customExercises.filter(c => c.id !== id);
+            if(modalState.selectedCustomId === id){
+              modalState.selectedCustomId = '__new__';
+              modalState.nome = ''; modalState.esecuzione = ''; modalState.muscoli = [];
+            }
+            modalState.customDropdownOpen = true;
+            sb.from('custom_exercises').delete().eq('id', id)
+              .then(({ error }) => { if(error) console.error('Errore eliminazione esercizio personalizzato', error); });
+            saveData();
+            renderModal();
+          });
+        });
+      }
+
+      const muscleGrid = document.getElementById('muscleGrid');
+      if(muscleGrid){
+        muscleGrid.querySelectorAll('.muscle-chip').forEach(chip => {
+          chip.addEventListener('click', () => {
+            const m = chip.dataset.m;
+            if(modalState.muscoli.includes(m)) modalState.muscoli = modalState.muscoli.filter(x => x !== m);
+            else modalState.muscoli.push(m);
+            chip.classList.toggle('selected');
+          });
+        });
+      }
+
+      const attrezziGrid = document.getElementById('attrezziGrid');
+      if(attrezziGrid){
+        attrezziGrid.querySelectorAll('.attrezzo-label').forEach(label => {
+          label.addEventListener('click', () => {
+            const a = label.dataset.a;
+            if(modalState.attrezzi.includes(a)) modalState.attrezzi = modalState.attrezzi.filter(x => x !== a);
+            else modalState.attrezzi.push(a);
+            const chip = label.closest('.attrezzo-chip');
+            if(chip) chip.classList.toggle('selected', modalState.attrezzi.includes(a));
+          });
+        });
+        attrezziGrid.querySelectorAll('.attrezzo-remove').forEach(btn => {
+          attachConfirmDelete(btn, 'Elimina?', () => {
+            const a = btn.dataset.a;
+            removeAttrezzoGlobale(a);
+            modalState.attrezzi = modalState.attrezzi.filter(x => x !== a);
+            renderModal();
+          });
+        });
+      }
+
+      const btnMostraAggiungiAttrezzo = document.getElementById('btnMostraAggiungiAttrezzo');
+      if(btnMostraAggiungiAttrezzo){
+        btnMostraAggiungiAttrezzo.addEventListener('click', () => {
+          modalState.showAddAttrezzo = true;
+          renderModal();
+          const input = document.getElementById('inputNuovoAttrezzo');
+          if(input) input.focus();
+        });
+      }
+
+      const btnConfermaAttrezzo = document.getElementById('btnConfermaAttrezzo');
+      if(btnConfermaAttrezzo){
+        const confermaAttrezzo = () => {
+          const input = document.getElementById('inputNuovoAttrezzo');
+          if(!input) return;
+          const nome = input.value.trim();
+          if(!nome) return;
+          const salvato = addAttrezzoGlobale(nome);
+          if(salvato && !modalState.attrezzi.includes(salvato)) modalState.attrezzi.push(salvato);
+          modalState.showAddAttrezzo = false;
+          renderModal();
+        };
+        btnConfermaAttrezzo.addEventListener('click', confermaAttrezzo);
+        const inputNuovoAttrezzo = document.getElementById('inputNuovoAttrezzo');
+        if(inputNuovoAttrezzo){
+          inputNuovoAttrezzo.addEventListener('keydown', (e) => { if(e.key === 'Enter') confermaAttrezzo(); });
+        }
+      }
+
+      const btnSalvaLibreria = document.getElementById('btnSalvaLibreria');
+      if(btnSalvaLibreria){
+        btnSalvaLibreria.addEventListener('click', () => {
+          syncFieldsFromDom();
+          const nome = modalState.nome.trim();
+          if(!nome){ document.getElementById('inputExNome').focus(); return; }
+          if(modalState.selectedCustomId && modalState.selectedCustomId !== '__new__'){
+            const existing = state.customExercises.find(c => c.id === modalState.selectedCustomId);
+            if(existing){
+              existing.nome = nome;
+              existing.esecuzione = modalState.esecuzione.trim();
+              existing.muscoli = modalState.muscoli.length ? modalState.muscoli : ["Non specificato"];
+            }
+          } else {
+            const nuovo = {
+              id: uid(),
+              categoria: 'personalizzato',
+              nome,
+              esecuzione: modalState.esecuzione.trim(),
+              muscoli: modalState.muscoli.length ? modalState.muscoli : ["Non specificato"]
+            };
+            state.customExercises.push(nuovo);
+            modalState.selectedCustomId = nuovo.id;
+          }
+          modalState.nome = nome;
+          saveData();
+          renderModal();
+        });
+      }
+
+      document.getElementById('btnSalvaEx').addEventListener('click', () => {
+        syncFieldsFromDom();
+        const nome = modalState.nome.trim();
+        if(!nome){
+          const nomeEl = document.getElementById('inputExNome');
+          if(nomeEl) nomeEl.focus();
+          return;
+        }
+        const nuovoEx = {
+          id: uid(),
+          numero: getNextNumero(scheda),
+          nome,
+          muscoli: modalState.muscoli.length ? modalState.muscoli : ["Non specificato"],
+          esecuzione: modalState.esecuzione.trim(),
+          serie: modalState.serie.trim(),
+          ripetizioni: modalState.ripetizioni.trim(),
+          recupero: modalState.recupero.trim(),
+          carichi: '',
+          note: '',
+          attrezzi: modalState.attrezzi.slice(),
+          open: false
+        };
+        scheda.esercizi.push(nuovoEx);
+        saveData();
+        closeModal();
+        render();
+      });
+    }
+
+    document.addEventListener('click', function closeCustomExDropdownOnOutsideClick(e){
+      const dropdown = document.getElementById('customExDropdown');
+      const panel = document.getElementById('customExPanel');
+      if(dropdown && panel && !dropdown.contains(e.target)){
+        panel.style.display = 'none';
+        dropdown.classList.remove('open');
+        modalState.customDropdownOpen = false;
+      }
+      const searchDropdown = document.getElementById('searchDropdown');
+      const searchPanel = document.getElementById('searchPanel');
+      if(searchDropdown && searchPanel && !searchDropdown.contains(e.target)){
+        searchPanel.style.display = 'none';
+        searchDropdown.classList.remove('open');
+        modalState.searchOpen = false;
+      }
+    });
+
+    renderModal();
+  }
+
+  document.getElementById('btnNuovaScheda').addEventListener('click', openNuovaSchedaModal);
+  document.getElementById('btnNuovaCartella').addEventListener('click', () => {
+    const nuovaCartella = { id: uid(), nome: 'Nuova cartella', parentId: state.currentFolderId || null };
+    state.folders.push(nuovaCartella);
+    editingFolderId = nuovaCartella.id;
+    saveData();
+    render();
+  });
+
+  function openEsportaSchedeModal(){
+    const rows = state.schede.map(s => {
+      const pathLabel = getFolderPath(s.folderId).map(f => f.nome).join(' / ') || 'Nessuna cartella';
+      return `
+        <label class="select-row">
+          <input type="checkbox" class="export-scheda-checkbox" data-id="${escapeAttr(s.id)}" checked />
+          <span>${escapeHtml(s.nome)}<span class="select-row-path">${escapeHtml(pathLabel)}</span></span>
+        </label>
+      `;
+    }).join('') || `<div class="custom-ex-empty">Nessuna scheda disponibile.</div>`;
+
+    modalRoot.innerHTML = `
+      <div class="overlay" id="ovExportSel">
+        <div class="modal">
+          <h3>Esporta schede</h3>
+          <p style="font-size:13px; color:var(--text-muted); margin:0 0 12px;">Seleziona le schede da esportare in un unico file.</p>
+          <div class="select-list">${rows}</div>
+          <div class="modal-actions">
+            <button class="btn" id="btnAnnullaExportSel">Annulla</button>
+            <button class="btn btn-primary" id="btnConfermaExportSel">Esporta selezionate</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('btnAnnullaExportSel').addEventListener('click', closeModal);
+    document.getElementById('ovExportSel').addEventListener('click', (e) => { if(e.target.id === 'ovExportSel') closeModal(); });
+    document.getElementById('btnConfermaExportSel').addEventListener('click', () => {
+      const ids = [...document.querySelectorAll('.export-scheda-checkbox:checked')].map(cb => cb.dataset.id);
+      if(!ids.length){ showToast('Seleziona almeno una scheda'); return; }
+      const selectedSchede = state.schede.filter(s => ids.includes(s.id));
+      const usedCustomIds = new Set();
+      selectedSchede.forEach(s => s.esercizi.forEach(ex => {
+        const custom = state.customExercises.find(c => c.nome === ex.nome);
+        if(custom) usedCustomIds.add(custom.id);
+      }));
+      const payload = {
+        type: 'schede-selezione',
+        schede: selectedSchede,
+        customExercises: state.customExercises.filter(c => usedCustomIds.has(c.id)),
+        attrezzi: state.attrezzi,
+        exportedAt: new Date().toISOString()
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = selectedSchede.length === 1 ? `${sanitizeFileName(selectedSchede[0].nome)}.json` : `schede-${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      closeModal();
+      showToast('Schede esportate');
+    });
+  }
+
+  function openImportaSchedeModal(parsed){
+    const list = Array.isArray(parsed.schede) ? parsed.schede : [];
+    if(!list.length){ showToast('Nessuna scheda trovata nel file'); return; }
+    const rows = list.map((s, i) => `
+      <label class="select-row">
+        <input type="checkbox" class="import-scheda-checkbox" data-index="${i}" checked />
+        <span>${escapeHtml(s.nome || 'Senza nome')}<span class="select-row-path">${(s.esercizi || []).length} esercizi</span></span>
+      </label>
+    `).join('');
+
+    modalRoot.innerHTML = `
+      <div class="overlay" id="ovImportSel">
+        <div class="modal">
+          <h3>Importa schede</h3>
+          <p style="font-size:13px; color:var(--text-muted); margin:0 0 12px;">Seleziona quali aggiungere. Le schede già presenti non verranno toccate: quelle importate finiscono senza cartella, poi puoi spostarle.</p>
+          <div class="select-list">${rows}</div>
+          <div class="modal-actions">
+            <button class="btn" id="btnAnnullaImportSel">Annulla</button>
+            <button class="btn btn-primary" id="btnConfermaImportSel">Importa selezionate</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('btnAnnullaImportSel').addEventListener('click', closeModal);
+    document.getElementById('ovImportSel').addEventListener('click', (e) => { if(e.target.id === 'ovImportSel') closeModal(); });
+    document.getElementById('btnConfermaImportSel').addEventListener('click', () => {
+      const indices = [...document.querySelectorAll('.import-scheda-checkbox:checked')].map(cb => parseInt(cb.dataset.index, 10));
+      if(!indices.length){ showToast('Seleziona almeno una scheda'); return; }
+      indices.forEach(i => {
+        const nuovaScheda = JSON.parse(JSON.stringify(list[i]));
+        nuovaScheda.id = uid();
+        nuovaScheda.folderId = null;
+        (nuovaScheda.esercizi || []).forEach(ex => { ex.id = uid(); });
+        state.schede.push(nuovaScheda);
+      });
+      (parsed.customExercises || []).forEach(c => {
+        const exists = state.customExercises.find(x => x.nome.toLowerCase() === c.nome.toLowerCase());
+        if(!exists) state.customExercises.push({ ...c, id: uid() });
+      });
+      (parsed.attrezzi || []).forEach(a => addAttrezzoGlobale(a));
+      saveData();
+      closeModal();
+      render();
+      showToast('Schede importate');
+    });
+  }
+
+  function openBackupMenuModal(){
+    modalRoot.innerHTML = `
+      <div class="overlay" id="ovBackupMenu">
+        <div class="modal">
+          <h3>Backup e importazione</h3>
+          <div class="backup-group">
+            <div class="backup-group-label">Singole schede</div>
+            <p class="backup-group-desc">Scegli quali schede esportare o importare, senza toccare il resto.</p>
+            <div class="backup-group-actions">
+              <button class="btn btn-small" id="btnEsportaSchede">Esporta schede…</button>
+              <button class="btn btn-small" id="btnImportaSchede">Importa schede…</button>
+            </div>
+          </div>
+          <div class="backup-group">
+            <div class="backup-group-label">Backup completo</div>
+            <p class="backup-group-desc">Tutto in un file. Importarlo sostituisce i dati attuali.</p>
+            <div class="backup-group-actions">
+              <button class="btn btn-small" id="btnEsportaBackup">Esporta backup completo</button>
+              <button class="btn btn-small" id="btnImportaBackup">Importa backup completo</button>
+            </div>
+          </div>
+          <input type="file" id="inputImportaSchedeFile" accept="application/json,.json" style="display:none;" />
+          <input type="file" id="inputImportaBackupFile" accept="application/json,.json" style="display:none;" />
+          <div class="modal-actions">
+            <button class="btn" id="btnChiudiBackupMenu">Chiudi</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('btnChiudiBackupMenu').addEventListener('click', closeModal);
+    document.getElementById('ovBackupMenu').addEventListener('click', (e) => { if(e.target.id === 'ovBackupMenu') closeModal(); });
+
+    document.getElementById('btnEsportaSchede').addEventListener('click', openEsportaSchedeModal);
+    document.getElementById('btnImportaSchede').addEventListener('click', () => {
+      document.getElementById('inputImportaSchedeFile').click();
+    });
+    document.getElementById('inputImportaSchedeFile').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try{
+          const parsed = JSON.parse(reader.result);
+          openImportaSchedeModal(parsed);
+        }catch(err){
+          showToast('File non valido');
+        }
+        e.target.value = '';
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById('btnEsportaBackup').addEventListener('click', () => {
+      const backup = {
+        schede: state.schede,
+        currentId: state.currentId,
+        customExercises: state.customExercises,
+        attrezzi: state.attrezzi,
+        folders: state.folders,
+        currentFolderId: state.currentFolderId,
+        exportedAt: new Date().toISOString()
+      };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `backup-schede-${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showToast('Backup esportato');
+    });
+
+    document.getElementById('btnImportaBackup').addEventListener('click', () => {
+      document.getElementById('inputImportaBackupFile').click();
+    });
+
+    document.getElementById('inputImportaBackupFile').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try{
+          const parsed = JSON.parse(reader.result);
+          openImportaBackupModal(parsed);
+        }catch(err){
+          showToast('File non valido');
+        }
+        e.target.value = '';
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  document.getElementById('btnBackupMenu').addEventListener('click', openBackupMenuModal);
+
+  function openImportaBackupModal(parsed){
+    modalRoot.innerHTML = `
+      <div class="overlay" id="ovImport">
+        <div class="modal">
+          <h3>Importa backup</h3>
+          <p style="font-size:13px; color:var(--text-muted); margin:0 0 14px;">Questo sostituirà tutte le schede, cartelle, esercizi personalizzati e attrezzi attuali con quelli contenuti nel file. L'azione non è reversibile.</p>
+          <div class="modal-actions">
+            <button class="btn" id="btnAnnullaImport">Annulla</button>
+            <button class="btn btn-primary" id="btnConfermaImport">Importa e sostituisci</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('btnAnnullaImport').addEventListener('click', closeModal);
+    document.getElementById('ovImport').addEventListener('click', (ev) => { if(ev.target.id === 'ovImport') closeModal(); });
+    document.getElementById('btnConfermaImport').addEventListener('click', async () => {
+      // Rigenera sempre id nuovi e validi: un backup può provenire da una
+      // versione precedente dell'app con id in un formato non compatibile
+      // col database (o semplicemente per evitare scontri con id esistenti).
+      const idMap = {};
+      function remapId(oldId){
+        if(!oldId) return null;
+        if(!idMap[oldId]) idMap[oldId] = uid();
+        return idMap[oldId];
+      }
+
+      const importedFolders = Array.isArray(parsed.folders) ? parsed.folders : [];
+      const newFolders = importedFolders.map(f => ({
+        id: remapId(f.id),
+        nome: f.nome,
+        parentId: f.parentId ? remapId(f.parentId) : null
+      }));
+
+      const importedSchede = Array.isArray(parsed.schede) ? parsed.schede : [];
+      const newSchede = importedSchede.map(s => ({
+        id: uid(),
+        nome: s.nome,
+        note: s.note || '',
+        folderId: s.folderId ? remapId(s.folderId) : null,
+        esercizi: (s.esercizi || []).map(ex => ({ ...ex, id: uid() }))
+      }));
+
+      const importedCustom = Array.isArray(parsed.customExercises) ? parsed.customExercises : [];
+      const newCustom = importedCustom.map(c => ({ ...c, id: uid() }));
+
+      state.folders = newFolders;
+      state.schede = newSchede;
+      state.customExercises = newCustom;
+      state.attrezzi = sortAttrezzi(Array.isArray(parsed.attrezzi) && parsed.attrezzi.length ? parsed.attrezzi : ATTREZZI_DEFAULT);
+      state.currentFolderId = null;
+      state.currentId = state.schede[0] ? state.schede[0].id : null;
+      editMode = false;
+      if(currentUserId){
+        try{
+          await Promise.all([
+            sb.from('schede').delete().eq('owner_id', currentUserId),
+            sb.from('folders').delete().eq('owner_id', currentUserId),
+            sb.from('custom_exercises').delete().eq('owner_id', currentUserId),
+            sb.from('attrezzi').delete().eq('owner_id', currentUserId)
+          ]);
+        }catch(e){
+          console.error('Errore pulizia dati prima del ripristino', e);
+        }
+      }
+      saveData();
+      closeModal();
+      render();
+      showToast('Backup importato');
+    });
+  }
+
+  const authScreen = document.getElementById('authScreen');
+  const authEmailInput = document.getElementById('authEmail');
+  const authPasswordInput = document.getElementById('authPassword');
+  const authErrorEl = document.getElementById('authError');
+  const authHintEl = document.getElementById('authHint');
+  const userEmailLabel = document.getElementById('userEmailLabel');
+
+  function showAuthError(msg){
+    authErrorEl.textContent = msg;
+    authErrorEl.style.display = 'block';
+  }
+  function clearAuthError(){
+    authErrorEl.style.display = 'none';
+    authErrorEl.textContent = '';
+  }
+
+  document.getElementById('btnLoginGoogle').addEventListener('click', async () => {
+    clearAuthError();
+    const { error } = await sb.auth.signInWithOAuth({ provider: 'google' });
+    if(error) showAuthError(error.message);
+  });
+
+  document.getElementById('btnAuthSignIn').addEventListener('click', async () => {
+    clearAuthError();
+    const email = authEmailInput.value.trim();
+    const password = authPasswordInput.value;
+    if(!email || !password){ showAuthError('Inserisci email e password.'); return; }
+    localStorage.setItem(REMEMBER_FLAG_KEY, document.getElementById('authRemember').checked ? 'true' : 'false');
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if(error){ showAuthError(error.message); return; }
+    window.location.reload();
+  });
+
+  document.getElementById('btnAuthSignUp').addEventListener('click', async () => {
+    clearAuthError();
+    const email = authEmailInput.value.trim();
+    const password = authPasswordInput.value;
+    if(!email || !password){ showAuthError('Inserisci email e password.'); return; }
+    if(password.length < 6){ showAuthError('La password deve avere almeno 6 caratteri.'); return; }
+    localStorage.setItem(REMEMBER_FLAG_KEY, document.getElementById('authRemember').checked ? 'true' : 'false');
+    const { error } = await sb.auth.signUp({ email, password });
+    if(error){ showAuthError(error.message); return; }
+    authHintEl.textContent = "Controlla la tua email per confermare l'account, poi accedi.";
+  });
+
+  // Se "Rimani connesso" non è spuntato, prova a disconnettere quando la
+  // pagina viene chiusa (best-effort: alcuni browser possono comunque
+  // mantenere la sessione se la chiusura non è "pulita").
+  window.addEventListener('pagehide', () => {
+    if(localStorage.getItem(REMEMBER_FLAG_KEY) === 'false'){
+      sb.auth.signOut();
+    }
+  });
+
+  document.getElementById('btnLogout').addEventListener('click', async () => {
+    const { error } = await sb.auth.signOut();
+    if(error) console.error('Errore durante il logout', error);
+    window.location.reload();
+  });
+
+  // I dati (schede, cartelle, esercizi personalizzati, attrezzi) vivono ora
+  // nel database Supabase, legati al tuo account: cambiando dispositivo,
+  // finché accedi con lo stesso account, ritrovi tutto.
+  let lastLoadedUserId = null;
+
+  sb.auth.onAuthStateChange((event, session) => {
+    if(session && session.user){
+      currentUserId = session.user.id;
+      authScreen.style.display = 'none';
+      app.style.display = '';
+      userEmailLabel.textContent = session.user.email || '';
+      if(lastLoadedUserId !== currentUserId){
+        lastLoadedUserId = currentUserId;
+        state = { schede: [], currentId: null, customExercises: [], attrezzi: sortAttrezzi(ATTREZZI_DEFAULT), folders: [], currentFolderId: null };
+        loaded = false;
+        loadData();
+      }
+    } else {
+      currentUserId = null;
+      lastLoadedUserId = null;
+      loaded = false;
+      state = { schede: [], currentId: null, customExercises: [], attrezzi: sortAttrezzi(ATTREZZI_DEFAULT), folders: [], currentFolderId: null };
+      app.style.display = 'none';
+      authScreen.style.display = 'flex';
+      render();
+    }
+  });
+})();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
