@@ -18,6 +18,165 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap');
 
+.auth-screen{
+  min-height: 100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: #18191B;
+  padding: 20px;
+  box-sizing: border-box;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.auth-card{
+  width: 100%;
+  max-width: 380px;
+  background: #212226;
+  border: 1px solid #35373D;
+  border-top: 3px solid #C6FF3D;
+  border-radius: 14px;
+  padding: 30px 26px;
+  box-sizing: border-box;
+}
+.auth-card .gym-title{
+  font-family:'Bebas Neue', sans-serif;
+  font-size: 34px;
+  letter-spacing: 1px;
+  color: #EDEEEF;
+  margin: 0 0 6px;
+}
+.auth-card .gym-title span{ color: #C6FF3D; }
+.auth-sub{
+  font-size: 13px;
+  color: #8B8D93;
+  margin: 0 0 22px;
+}
+.auth-card .field{
+  margin-bottom: 14px;
+}
+.auth-card .field label{
+  display:block;
+  font-family:'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: #8B8D93;
+  margin-bottom: 6px;
+}
+.auth-card .field input{
+  width: 100%;
+  background: #18191B;
+  border: 1px solid #35373D;
+  color: #EDEEEF;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13.5px;
+  box-sizing: border-box;
+}
+.auth-card .field input:focus{
+  outline: none;
+  border-color: #C6FF3D;
+}
+.btn-google{
+  width: 100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap: 8px;
+  background: #FFFFFF;
+  color: #1F1F1F;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 14px;
+  font-weight: 600;
+  font-size: 13.5px;
+  cursor: pointer;
+  margin-bottom: 4px;
+}
+.btn-google:hover{ background: #F2F2F2; }
+.btn-google:disabled{
+  background: #2A2B30;
+  color: #6E7076;
+  cursor: not-allowed;
+}
+.btn-google:disabled:hover{ background: #2A2B30; }
+.google-badge{
+  font-family:'JetBrains Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  background: #35373D;
+  color: #9C9FA6;
+  padding: 2px 7px;
+  border-radius: 20px;
+  margin-left: 4px;
+}
+.auth-divider{
+  text-align:center;
+  color: #8B8D93;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin: 18px 0;
+  position: relative;
+}
+.auth-divider::before, .auth-divider::after{
+  content:"";
+  position:absolute;
+  top:50%;
+  width: 40%;
+  height:1px;
+  background:#35373D;
+}
+.auth-divider::before{ left:0; }
+.auth-divider::after{ right:0; }
+.auth-error{
+  background: rgba(255,90,90,.1);
+  border: 1px solid #FF5A5A;
+  color: #FF9C9C;
+  font-size: 12.5px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+.auth-actions{
+  display:flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+.auth-actions .btn{
+  flex:1;
+  font-family:'Inter', sans-serif;
+  font-weight:600;
+  font-size: 13px;
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  border: 1px solid #35373D;
+}
+.auth-actions .btn-primary{
+  background: #C6FF3D;
+  color: #101108;
+  border-color: #C6FF3D;
+}
+.auth-actions .btn-primary:hover{ background: #9DCB2E; border-color: #9DCB2E; }
+.auth-actions .btn:not(.btn-primary){
+  background: #212226;
+  color: #EDEEEF;
+}
+.auth-actions .btn:not(.btn-primary):hover{ border-color: #C6FF3D; }
+.auth-hint{
+  font-size: 11.5px;
+  color: #8B8D93;
+  text-align: center;
+  margin: 14px 0 0;
+}
+.user-email{
+  font-family:'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #8B8D93;
+}
 .gym-app{
   --bg: #17181A;
   --surface: #212226;
@@ -994,13 +1153,46 @@
 
 </head>
 <body>
-<div class="gym-app" id="gymApp">
+
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <h1 class="gym-title" style="margin-bottom:4px;">LE MIE <span>SCHEDE</span></h1>
+    <p class="auth-sub">Accedi per vedere le tue schede su tutti i dispositivi.</p>
+
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="authEmail" placeholder="tuaemail@esempio.com" autocomplete="email" />
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="authPassword" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+    <div id="authError" class="auth-error" style="display:none;"></div>
+
+    <div class="auth-actions">
+      <button class="btn btn-primary" id="btnAuthSignIn">Accedi</button>
+      <button class="btn" id="btnAuthSignUp">Crea account</button>
+    </div>
+    <p class="auth-hint" id="authHint"></p>
+
+    <div class="auth-divider">oppure</div>
+
+    <button class="btn btn-google" id="btnLoginGoogle" disabled title="In arrivo">
+      <span>Continua con Google</span>
+      <span class="google-badge">Presto disponibile</span>
+    </button>
+  </div>
+</div>
+
+<div class="gym-app" id="gymApp" style="display:none;">
   <div class="gym-header">
     <div>
       <h1 class="gym-title">LE MIE <span>SCHEDE</span></h1>
       <div class="gym-sub" id="dateNow"></div>
     </div>
-    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+      <span class="user-email" id="userEmailLabel"></span>
+      <button class="btn btn-small" id="btnLogout">Esci</button>
       <button class="btn" id="btnNuovaCartella">+ Cartella</button>
       <button class="btn btn-primary" id="btnNuovaScheda">+ Nuova scheda</button>
     </div>
@@ -1031,6 +1223,12 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL = "https://kmzotdnierbkqyvnlfqs.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imttem90ZG5pZXJia3F5dm5sZnFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1Nzc3MjEsImV4cCI6MjEwMTE1MzcyMX0.bFHhBErlB3ajZvvmIVXErrLbm4qUq4vuPmlyUEWbIBg";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
 <script>
 (function(){
 
@@ -2708,7 +2906,67 @@
     });
   }
 
-  loadData();
+  const authScreen = document.getElementById('authScreen');
+  const authEmailInput = document.getElementById('authEmail');
+  const authPasswordInput = document.getElementById('authPassword');
+  const authErrorEl = document.getElementById('authError');
+  const authHintEl = document.getElementById('authHint');
+  const userEmailLabel = document.getElementById('userEmailLabel');
+
+  function showAuthError(msg){
+    authErrorEl.textContent = msg;
+    authErrorEl.style.display = 'block';
+  }
+  function clearAuthError(){
+    authErrorEl.style.display = 'none';
+    authErrorEl.textContent = '';
+  }
+
+  document.getElementById('btnLoginGoogle').addEventListener('click', async () => {
+    clearAuthError();
+    const { error } = await sb.auth.signInWithOAuth({ provider: 'google' });
+    if(error) showAuthError(error.message);
+  });
+
+  document.getElementById('btnAuthSignIn').addEventListener('click', async () => {
+    clearAuthError();
+    const email = authEmailInput.value.trim();
+    const password = authPasswordInput.value;
+    if(!email || !password){ showAuthError('Inserisci email e password.'); return; }
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if(error) showAuthError(error.message);
+  });
+
+  document.getElementById('btnAuthSignUp').addEventListener('click', async () => {
+    clearAuthError();
+    const email = authEmailInput.value.trim();
+    const password = authPasswordInput.value;
+    if(!email || !password){ showAuthError('Inserisci email e password.'); return; }
+    if(password.length < 6){ showAuthError('La password deve avere almeno 6 caratteri.'); return; }
+    const { error } = await sb.auth.signUp({ email, password });
+    if(error){ showAuthError(error.message); return; }
+    authHintEl.textContent = "Controlla la tua email per confermare l'account, poi accedi.";
+  });
+
+  document.getElementById('btnLogout').addEventListener('click', async () => {
+    await sb.auth.signOut();
+  });
+
+  // NOTA: in questa fase i dati restano salvati nel browser (localStorage),
+  // legati al dispositivo — il login serve solo per accedere. Il prossimo
+  // passo sposterà davvero i dati dentro le tabelle Supabase, sincronizzati
+  // tra dispositivi e condivisibili tra utenti.
+  sb.auth.onAuthStateChange((event, session) => {
+    if(session && session.user){
+      authScreen.style.display = 'none';
+      app.style.display = '';
+      userEmailLabel.textContent = session.user.email || '';
+      if(!loaded) loadData();
+    } else {
+      app.style.display = 'none';
+      authScreen.style.display = 'flex';
+    }
+  });
 })();
 </script>
 <script>
