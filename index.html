@@ -224,14 +224,28 @@
 }
 
 .gym-header{
-  display:flex;
-  align-items:flex-end;
-  justify-content:space-between;
-  gap: 16px;
-  flex-wrap: wrap;
   margin-bottom: 22px;
   border-bottom: 1px solid var(--border);
   padding-bottom: 18px;
+}
+.gym-header-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.gym-account{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.gym-header-actions{
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 .gym-title{
   font-family:'Bebas Neue', 'Inter', sans-serif;
@@ -248,6 +262,14 @@
   margin-top: 6px;
   font-family: 'JetBrains Mono', monospace;
   letter-spacing: .5px;
+}
+.section-label{
+  font-family:'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--text-muted);
+  margin: 4px 0 8px;
 }
 
 .btn{
@@ -290,16 +312,26 @@
   align-items:center;
   gap: 6px;
   flex-wrap: wrap;
-  font-size: 12.5px;
+  font-size: 13.5px;
   color: var(--text-muted);
-  margin-bottom: 12px;
+  margin-bottom: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+.breadcrumb::before{
+  content: "📍";
+  margin-right: 2px;
+  font-size: 12px;
 }
 .breadcrumb-item{
   cursor: pointer;
-  padding: 3px 6px;
-  border-radius: 4px;
+  padding: 3px 7px;
+  border-radius: 5px;
+  font-weight: 600;
 }
-.breadcrumb-item:hover{ color: var(--text); background: var(--surface); }
+.breadcrumb-item:hover{ color: var(--text); background: var(--surface-2); }
 .breadcrumb-item.current{ color: var(--accent); cursor: default; }
 .breadcrumb-item.current:hover{ background: none; }
 .breadcrumb-sep{ color: var(--border); }
@@ -391,11 +423,19 @@
   padding: 22px;
 }
 .scheda-head{
+  margin-bottom: 18px;
+}
+.scheda-title-row{
   display:flex;
   align-items:center;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.scheda-toolbar{
+  display:flex;
+  gap: 8px;
   flex-wrap: wrap;
 }
 .scheda-name-row{
@@ -954,6 +994,7 @@
   max-width: 420px;
   max-height: 85vh;
   overflow-y: auto;
+  scroll-behavior: smooth;
 }
 .modal h3{
   font-family:'Bebas Neue', sans-serif;
@@ -1023,11 +1064,31 @@
   text-align: center;
   margin-top: 26px;
 }
-.backup-bar{
+.backup-section{
   display:flex;
   justify-content: center;
-  gap: 10px;
-  margin-top: 14px;
+  margin-top: 30px;
+}
+.backup-group{
+  margin-bottom: 18px;
+}
+.backup-group:last-of-type{ margin-bottom: 6px; }
+.backup-group-label{
+  font-family:'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+.backup-group-desc{
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin: 0 0 10px;
+}
+.backup-group-actions{
+  display:flex;
+  gap: 8px;
   flex-wrap: wrap;
 }
 .select-list{
@@ -1205,34 +1266,34 @@
 
 <div class="gym-app" id="gymApp" style="display:none;">
   <div class="gym-header">
-    <div>
-      <h1 class="gym-title">LE MIE <span>SCHEDE</span></h1>
-      <div class="gym-sub" id="dateNow"></div>
+    <div class="gym-header-top">
+      <div>
+        <h1 class="gym-title">LE MIE <span>SCHEDE</span></h1>
+        <div class="gym-sub" id="dateNow"></div>
+      </div>
+      <div class="gym-account">
+        <span class="user-email" id="userEmailLabel"></span>
+        <button class="btn btn-small" id="btnLogout">Esci</button>
+      </div>
     </div>
-    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-      <span class="user-email" id="userEmailLabel"></span>
-      <button class="btn btn-small" id="btnLogout">Esci</button>
+    <div class="gym-header-actions">
       <button class="btn" id="btnNuovaCartella">+ Cartella</button>
       <button class="btn btn-primary" id="btnNuovaScheda">+ Nuova scheda</button>
     </div>
   </div>
 
   <div class="breadcrumb" id="breadcrumb"></div>
+
+  <div class="section-label" id="foldersLabel" style="display:none;">Cartelle</div>
   <div class="folders-grid" id="foldersGrid"></div>
 
+  <div class="section-label" id="tabsLabel" style="display:none;">Schede</div>
   <div class="tabs" id="tabs"></div>
 
   <div id="schedaContainer"></div>
 
-  <div class="backup-bar" style="margin-top:28px;">
-    <button class="btn btn-small" id="btnEsportaSchede">Esporta schede…</button>
-    <button class="btn btn-small" id="btnImportaSchede">Importa schede…</button>
-    <input type="file" id="inputImportaSchedeFile" accept="application/json,.json" style="display:none;" />
-  </div>
-  <div class="backup-bar">
-    <button class="btn btn-small" id="btnEsportaBackup">Esporta backup completo</button>
-    <button class="btn btn-small" id="btnImportaBackup">Importa backup completo</button>
-    <input type="file" id="inputImportaBackupFile" accept="application/json,.json" style="display:none;" />
+  <div class="backup-section">
+    <button class="btn btn-small" id="btnBackupMenu">Backup e importazione</button>
   </div>
 
   <div class="storage-note">I dati vengono salvati automaticamente sul tuo account e sincronizzati su ogni dispositivo.</div>
@@ -1640,6 +1701,8 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 
   function renderFolders(){
     const subfolders = getSubfolders(state.currentFolderId);
+    const foldersLabelEl = document.getElementById('foldersLabel');
+    foldersLabelEl.style.display = subfolders.length ? 'block' : 'none';
     foldersGridEl.innerHTML = '';
     subfolders.forEach(f => {
       const isEditing = editingFolderId === f.id;
@@ -1712,8 +1775,13 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   }
 
   function renderTabs(){
+    const schedeQui = getSchedeInFolder(state.currentFolderId);
+    const tabsLabelEl = document.getElementById('tabsLabel');
+    tabsLabelEl.style.display = schedeQui.length ? 'block' : 'none';
+    const currentFolder = state.folders.find(f => f.id === state.currentFolderId);
+    tabsLabelEl.textContent = currentFolder ? `Schede in "${currentFolder.nome}"` : 'Schede';
     tabsEl.innerHTML = "";
-    getSchedeInFolder(state.currentFolderId).forEach(s => {
+    schedeQui.forEach(s => {
       const tab = document.createElement('button');
       tab.className = 'tab' + (s.id === state.currentId ? ' active' : '');
       tab.textContent = s.nome;
@@ -1746,17 +1814,21 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     const head = document.createElement('div');
     head.className = 'scheda-head';
     head.innerHTML = `
-      <div class="scheda-name-row">
-        ${isEditingNome
-          ? `<input type="text" class="scheda-name-input" id="schedaNameInput" value="${escapeAttr(scheda.nome)}" />`
-          : `<span class="scheda-name" id="schedaNameDisplay" title="Clicca per rinominare">${escapeHtml(scheda.nome)}</span>`
-        }
+      <div class="scheda-title-row">
+        <div class="scheda-name-row">
+          ${isEditingNome
+            ? `<input type="text" class="scheda-name-input" id="schedaNameInput" value="${escapeAttr(scheda.nome)}" />`
+            : `<span class="scheda-name" id="schedaNameDisplay" title="Clicca per rinominare">${escapeHtml(scheda.nome)}</span>`
+          }
+        </div>
+        <span class="scheda-count">${scheda.esercizi.length} ESERCIZI</span>
+      </div>
+      <div class="scheda-toolbar">
         <select class="btn btn-small" id="selSpostaCartella" title="Sposta in cartella">${folderOptionsHtml}</select>
         <button class="btn btn-small" id="btnEsportaImmagine">Esporta immagine</button>
         <button class="btn btn-small" id="btnEsportaPdf">Esporta PDF</button>
         <button class="btn btn-ghost" id="btnEliminaScheda" title="Elimina scheda">Elimina scheda</button>
       </div>
-      <span class="scheda-count">${scheda.esercizi.length} ESERCIZI</span>
     `;
     card.appendChild(head);
 
@@ -2408,7 +2480,14 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     }
 
     function buildEsercizioSelectHtml(){
-      if(modalState.categoria === '') return '';
+      if(modalState.categoria === ''){
+        return `
+          <div class="field">
+            <label>Esercizio</label>
+            <select disabled><option>— Scegli prima una categoria —</option></select>
+          </div>
+        `;
+      }
       if(modalState.categoria === 'personalizzato'){
         const selected = state.customExercises.find(c => c.id === modalState.selectedCustomId);
         const selectedLabel = modalState.selectedCustomId === '__new__' || !selected
@@ -2451,14 +2530,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       `;
     }
 
-    function shouldShowDetail(){
-      if(modalState.categoria === 'personalizzato') return true;
-      if(modalState.categoria !== '' && modalState.selectedIndex !== '') return true;
-      return false;
-    }
-
     function buildDetailSectionHtml(){
-      if(!shouldShowDetail()) return '';
       return `
         <div class="field">
           <label>Nome esercizio</label>
@@ -2474,10 +2546,9 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
           <label>Come si esegue (breve descrizione)</label>
           <textarea id="inputExEsec" placeholder="Descrivi in poche righe l'esecuzione...">${escapeHtml(modalState.esecuzione)}</textarea>
         </div>
-        ${modalState.categoria === 'personalizzato' ? `
         <div class="field">
-          <button type="button" class="btn btn-small" id="btnSalvaLibreria">+ Aggiungi esercizio al menu</button>
-        </div>` : ''}
+          <button type="button" class="btn btn-small" id="btnSalvaLibreria">+ Salva questo esercizio nel menu</button>
+        </div>
         <div class="field-row">
           <div class="field">
             <label>Serie</label>
@@ -2905,68 +2976,103 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     });
   }
 
-  document.getElementById('btnEsportaSchede').addEventListener('click', openEsportaSchedeModal);
-  document.getElementById('btnImportaSchede').addEventListener('click', () => {
-    document.getElementById('inputImportaSchedeFile').click();
-  });
-  document.getElementById('inputImportaSchedeFile').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try{
-        const parsed = JSON.parse(reader.result);
-        openImportaSchedeModal(parsed);
-      }catch(err){
-        showToast('File non valido');
-      }
-      e.target.value = '';
-    };
-    reader.readAsText(file);
-  });
+  function openBackupMenuModal(){
+    modalRoot.innerHTML = `
+      <div class="overlay" id="ovBackupMenu">
+        <div class="modal">
+          <h3>Backup e importazione</h3>
+          <div class="backup-group">
+            <div class="backup-group-label">Singole schede</div>
+            <p class="backup-group-desc">Scegli quali schede esportare o importare, senza toccare il resto.</p>
+            <div class="backup-group-actions">
+              <button class="btn btn-small" id="btnEsportaSchede">Esporta schede…</button>
+              <button class="btn btn-small" id="btnImportaSchede">Importa schede…</button>
+            </div>
+          </div>
+          <div class="backup-group">
+            <div class="backup-group-label">Backup completo</div>
+            <p class="backup-group-desc">Tutto in un file. Importarlo sostituisce i dati attuali.</p>
+            <div class="backup-group-actions">
+              <button class="btn btn-small" id="btnEsportaBackup">Esporta backup completo</button>
+              <button class="btn btn-small" id="btnImportaBackup">Importa backup completo</button>
+            </div>
+          </div>
+          <input type="file" id="inputImportaSchedeFile" accept="application/json,.json" style="display:none;" />
+          <input type="file" id="inputImportaBackupFile" accept="application/json,.json" style="display:none;" />
+          <div class="modal-actions">
+            <button class="btn" id="btnChiudiBackupMenu">Chiudi</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('btnChiudiBackupMenu').addEventListener('click', closeModal);
+    document.getElementById('ovBackupMenu').addEventListener('click', (e) => { if(e.target.id === 'ovBackupMenu') closeModal(); });
 
-  document.getElementById('btnEsportaBackup').addEventListener('click', () => {
-    const backup = {
-      schede: state.schede,
-      currentId: state.currentId,
-      customExercises: state.customExercises,
-      attrezzi: state.attrezzi,
-      folders: state.folders,
-      currentFolderId: state.currentFolderId,
-      exportedAt: new Date().toISOString()
-    };
-    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const dateStr = new Date().toISOString().slice(0, 10);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `backup-schede-${dateStr}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    showToast('Backup esportato');
-  });
+    document.getElementById('btnEsportaSchede').addEventListener('click', openEsportaSchedeModal);
+    document.getElementById('btnImportaSchede').addEventListener('click', () => {
+      document.getElementById('inputImportaSchedeFile').click();
+    });
+    document.getElementById('inputImportaSchedeFile').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try{
+          const parsed = JSON.parse(reader.result);
+          openImportaSchedeModal(parsed);
+        }catch(err){
+          showToast('File non valido');
+        }
+        e.target.value = '';
+      };
+      reader.readAsText(file);
+    });
 
-  document.getElementById('btnImportaBackup').addEventListener('click', () => {
-    document.getElementById('inputImportaBackupFile').click();
-  });
+    document.getElementById('btnEsportaBackup').addEventListener('click', () => {
+      const backup = {
+        schede: state.schede,
+        currentId: state.currentId,
+        customExercises: state.customExercises,
+        attrezzi: state.attrezzi,
+        folders: state.folders,
+        currentFolderId: state.currentFolderId,
+        exportedAt: new Date().toISOString()
+      };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `backup-schede-${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showToast('Backup esportato');
+    });
 
-  document.getElementById('inputImportaBackupFile').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try{
-        const parsed = JSON.parse(reader.result);
-        openImportaBackupModal(parsed);
-      }catch(err){
-        showToast('File non valido');
-      }
-      e.target.value = '';
-    };
-    reader.readAsText(file);
-  });
+    document.getElementById('btnImportaBackup').addEventListener('click', () => {
+      document.getElementById('inputImportaBackupFile').click();
+    });
+
+    document.getElementById('inputImportaBackupFile').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try{
+          const parsed = JSON.parse(reader.result);
+          openImportaBackupModal(parsed);
+        }catch(err){
+          showToast('File non valido');
+        }
+        e.target.value = '';
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  document.getElementById('btnBackupMenu').addEventListener('click', openBackupMenuModal);
 
   function openImportaBackupModal(parsed){
     modalRoot.innerHTML = `
