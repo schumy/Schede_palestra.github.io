@@ -1441,7 +1441,15 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 
   document.getElementById('dateNow').textContent = new Date().toLocaleDateString('it-IT', { weekday:'long', day:'numeric', month:'long' });
 
-  function uid(){ return Math.random().toString(36).slice(2, 10); }
+  function uid(){
+    if(window.crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+    // fallback per browser molto vecchi senza crypto.randomUUID
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
 
   async function loadData(){
     if(!currentUserId){ loaded = true; return; }
@@ -1487,7 +1495,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       if(state.folders.length){
         const folderRows = state.folders.map(f => ({ id: f.id, owner_id: currentUserId, nome: f.nome, parent_id: f.parentId || null }));
         const { error } = await sb.from('folders').upsert(folderRows);
-        if(error) console.error('Errore salvataggio cartelle', error);
+        if(error){ console.error('Errore salvataggio cartelle', error); showToast('Errore nel salvare le cartelle'); }
       }
       if(state.schede.length){
         const schedeRows = state.schede.map(s => ({
@@ -1495,19 +1503,19 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
           nome: s.nome, note: s.note || '', esercizi: s.esercizi || []
         }));
         const { error } = await sb.from('schede').upsert(schedeRows);
-        if(error) console.error('Errore salvataggio schede', error);
+        if(error){ console.error('Errore salvataggio schede', error); showToast('Errore nel salvare la scheda'); }
       }
       if(state.customExercises.length){
         const customRows = state.customExercises.map(c => ({
           id: c.id, owner_id: currentUserId, nome: c.nome, muscoli: c.muscoli || [], esecuzione: c.esecuzione || ''
         }));
         const { error } = await sb.from('custom_exercises').upsert(customRows);
-        if(error) console.error('Errore salvataggio esercizi personalizzati', error);
+        if(error){ console.error('Errore salvataggio esercizi personalizzati', error); showToast('Errore nel salvare gli esercizi personalizzati'); }
       }
       if(state.attrezzi.length){
         const attrezziRows = state.attrezzi.map(a => ({ owner_id: currentUserId, nome: a }));
         const { error } = await sb.from('attrezzi').upsert(attrezziRows, { onConflict: 'owner_id,nome' });
-        if(error) console.error('Errore salvataggio attrezzi', error);
+        if(error){ console.error('Errore salvataggio attrezzi', error); showToast('Errore nel salvare gli attrezzi'); }
       }
     }catch(e){
       console.error("Errore salvataggio dati", e);
