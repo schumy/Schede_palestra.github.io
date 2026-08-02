@@ -393,6 +393,91 @@
   flex: 0 0 auto;
 }
 .folder-delete:hover{ color: var(--danger); background: rgba(255,90,90,.1); }
+.folder-share-btn{
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 4px;
+  flex: 0 0 auto;
+}
+.folder-share-btn:hover{ color: var(--accent); background: rgba(198,255,61,.1); }
+.shared-badge{
+  font-family:'JetBrains Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+  background: rgba(198,255,61,.12);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  padding: 2px 6px;
+  border-radius: 20px;
+  flex: 0 0 auto;
+}
+.share-list{
+  display:flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  margin-bottom: 14px;
+}
+.share-row{
+  display:flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.share-email{
+  flex: 1;
+  font-size: 13px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.share-toggle{
+  display:flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.share-toggle input{
+  accent-color: var(--accent);
+  width: 14px;
+  height: 14px;
+}
+.share-remove{
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 4px;
+  flex: 0 0 auto;
+}
+.share-remove:hover{ color: var(--danger); background: rgba(255,90,90,.1); }
+.owner-badge{
+  font-family:'JetBrains Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  padding: 3px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
 .tab{
   font-family:'Inter', sans-serif;
   font-size: 13px;
@@ -1012,7 +1097,7 @@
   color: var(--text-muted);
   margin-bottom: 6px;
 }
-.field input[type=text], .field select, .field textarea{
+.field input[type=text], .field input[type=email], .field select, .field textarea{
   width: 100%;
   background: var(--bg);
   border: 1px solid var(--border);
@@ -1023,6 +1108,7 @@
   font-size: 13.5px;
 }
 .field textarea{ min-height: 60px; resize: vertical; }
+.assign-field{ margin-top: 12px; margin-bottom: 0; }
 .muscle-grid{
   display:flex;
   flex-wrap: wrap;
@@ -1515,13 +1601,19 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       if(customRes.error) console.error('Errore caricamento esercizi personalizzati', customRes.error);
       if(attrezziRes.error) console.error('Errore caricamento attrezzi', attrezziRes.error);
 
-      state.folders = (foldersRes.data || []).map(f => ({ id: f.id, nome: f.nome, parentId: f.parent_id || null }));
+      state.folders = (foldersRes.data || []).map(f => ({
+        id: f.id, nome: f.nome, parentId: f.parent_id || null,
+        ownerId: f.owner_id, isMine: f.owner_id === currentUserId
+      }));
       state.schede = (schedeRes.data || []).map(s => ({
         id: s.id,
         nome: s.nome,
         note: s.note || '',
         folderId: s.folder_id || null,
-        esercizi: s.esercizi || []
+        esercizi: s.esercizi || [],
+        ownerId: s.owner_id,
+        isMine: s.owner_id === currentUserId,
+        assignedToEmail: s.assigned_to_email || ''
       }));
       state.customExercises = (customRes.data || []).map(c => ({
         id: c.id, nome: c.nome, muscoli: c.muscoli || [], esecuzione: c.esecuzione || '', categoria: 'personalizzato'
@@ -1542,15 +1634,18 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   async function saveData(){
     if(!currentUserId) return;
     try{
-      if(state.folders.length){
-        const folderRows = state.folders.map(f => ({ id: f.id, owner_id: currentUserId, nome: f.nome, parent_id: f.parentId || null }));
+      const myFolders = state.folders.filter(f => f.isMine !== false);
+      if(myFolders.length){
+        const folderRows = myFolders.map(f => ({ id: f.id, owner_id: currentUserId, nome: f.nome, parent_id: f.parentId || null }));
         const { error } = await sb.from('folders').upsert(folderRows);
         if(error){ console.error('Errore salvataggio cartelle', error); showToast('Errore nel salvare le cartelle'); }
       }
-      if(state.schede.length){
-        const schedeRows = state.schede.map(s => ({
+      const mySchede = state.schede.filter(s => s.isMine !== false);
+      if(mySchede.length){
+        const schedeRows = mySchede.map(s => ({
           id: s.id, owner_id: currentUserId, folder_id: s.folderId || null,
-          nome: s.nome, note: s.note || '', esercizi: s.esercizi || []
+          nome: s.nome, note: s.note || '', esercizi: s.esercizi || [],
+          assigned_to_email: s.assignedToEmail || null
         }));
         const { error } = await sb.from('schede').upsert(schedeRows);
         if(error){ console.error('Errore salvataggio schede', error); showToast('Errore nel salvare la scheda'); }
@@ -1628,11 +1723,30 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   }
 
   function getSubfolders(parentId){
-    return state.folders.filter(f => (f.parentId || null) === (parentId || null));
+    if(!parentId){
+      // Alla radice mostro anche le cartelle condivise con me il cui vero
+      // "genitore" non mi è visibile (appartiene a qualcun altro e non è
+      // stato condiviso lui stesso) — altrimenti resterebbero irraggiungibili.
+      return state.folders.filter(f => {
+        const pid = f.parentId || null;
+        if(!pid) return true;
+        const parentVisibile = state.folders.some(p => p.id === pid);
+        return !parentVisibile;
+      });
+    }
+    return state.folders.filter(f => (f.parentId || null) === parentId);
   }
 
   function getSchedeInFolder(folderId){
-    return state.schede.filter(s => (s.folderId || null) === (folderId || null));
+    if(!folderId){
+      return state.schede.filter(s => {
+        const fid = s.folderId || null;
+        if(!fid) return true;
+        const folderVisibile = state.folders.some(f => f.id === fid);
+        return !folderVisibile;
+      });
+    }
+    return state.schede.filter(s => (s.folderId || null) === folderId);
   }
 
   function getFolderPath(folderId){
@@ -1706,6 +1820,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     foldersGridEl.innerHTML = '';
     subfolders.forEach(f => {
       const isEditing = editingFolderId === f.id;
+      const mine = f.isMine !== false;
       const tile = document.createElement('div');
       tile.className = 'folder-tile';
       const contenuti = getSubfolders(f.id).length + getSchedeInFolder(f.id).length;
@@ -1715,8 +1830,10 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
           ? `<input type="text" class="folder-tile-name-input" value="${escapeAttr(f.nome)}" />`
           : `<button class="folder-tile-name">${escapeHtml(f.nome)}</button>`
         }
+        ${!mine ? `<span class="shared-badge">Condivisa</span>` : ''}
         <span class="folder-tile-count">${contenuti}</span>
-        <button class="folder-delete" title="Elimina cartella">&times;</button>
+        ${mine ? `<button class="folder-share-btn" title="Condividi cartella">&#128101;</button>` : ''}
+        ${mine ? `<button class="folder-delete" title="Elimina cartella">&times;</button>` : ''}
       `;
       if(isEditing){
         const input = tile.querySelector('.folder-tile-name-input');
@@ -1744,32 +1861,46 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
           saveData();
           render();
         });
-        tile.addEventListener('dblclick', (e) => {
-          if(e.target.closest('.folder-delete')) return;
-          editingFolderId = f.id;
+        if(mine){
+          tile.addEventListener('dblclick', (e) => {
+            if(e.target.closest('.folder-delete') || e.target.closest('.folder-share-btn')) return;
+            editingFolderId = f.id;
+            render();
+          });
+        }
+      }
+      const shareBtn = tile.querySelector('.folder-share-btn');
+      if(shareBtn){
+        shareBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openCondividiCartellaModal(f);
+        });
+      }
+      const deleteBtn = tile.querySelector('.folder-delete');
+      if(deleteBtn){
+        attachConfirmDelete(deleteBtn, 'Elimina?', () => {
+          const idsToRemove = getDescendantFolderIds(f.id);
+          const schedaCorrenteRimossa = state.schede.find(s => s.id === state.currentId && idsToRemove.includes(s.folderId));
+          const schedeIdsToDelete = state.schede.filter(s => idsToRemove.includes(s.folderId)).map(s => s.id);
+          state.folders = state.folders.filter(x => !idsToRemove.includes(x.id));
+          state.schede = state.schede.filter(s => !idsToRemove.includes(s.folderId));
+          if(idsToRemove.includes(state.currentFolderId)) state.currentFolderId = (f.parentId || null);
+          if(schedaCorrenteRimossa){
+            const schedeQui = getSchedeInFolder(state.currentFolderId);
+            state.currentId = schedeQui[0] ? schedeQui[0].id : null;
+          }
+          if(schedeIdsToDelete.length){
+            sb.from('schede').delete().in('id', schedeIdsToDelete)
+              .then(({ error }) => { if(error) console.error('Errore eliminazione schede della cartella', error); });
+          }
+          sb.from('folders').delete().in('id', idsToRemove)
+            .then(({ error }) => { if(error) console.error('Errore eliminazione cartella', error); });
+          sb.from('folder_shares').delete().in('folder_id', idsToRemove)
+            .then(({ error }) => { if(error) console.error('Errore eliminazione condivisioni', error); });
+          saveData();
           render();
         });
       }
-      attachConfirmDelete(tile.querySelector('.folder-delete'), 'Elimina?', () => {
-        const idsToRemove = getDescendantFolderIds(f.id);
-        const schedaCorrenteRimossa = state.schede.find(s => s.id === state.currentId && idsToRemove.includes(s.folderId));
-        const schedeIdsToDelete = state.schede.filter(s => idsToRemove.includes(s.folderId)).map(s => s.id);
-        state.folders = state.folders.filter(x => !idsToRemove.includes(x.id));
-        state.schede = state.schede.filter(s => !idsToRemove.includes(s.folderId));
-        if(idsToRemove.includes(state.currentFolderId)) state.currentFolderId = (f.parentId || null);
-        if(schedaCorrenteRimossa){
-          const schedeQui = getSchedeInFolder(state.currentFolderId);
-          state.currentId = schedeQui[0] ? schedeQui[0].id : null;
-        }
-        if(schedeIdsToDelete.length){
-          sb.from('schede').delete().in('id', schedeIdsToDelete)
-            .then(({ error }) => { if(error) console.error('Errore eliminazione schede della cartella', error); });
-        }
-        sb.from('folders').delete().in('id', idsToRemove)
-          .then(({ error }) => { if(error) console.error('Errore eliminazione cartella', error); });
-        saveData();
-        render();
-      });
       foldersGridEl.appendChild(tile);
     });
   }
@@ -1809,30 +1940,40 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     card.className = 'scheda-card';
 
     const isEditingNome = editingSchedaNomeId === scheda.id;
-    const folderOptionsHtml = buildFolderOptionsHtml(scheda.folderId);
+    const mine = scheda.isMine !== false;
+    const folderOptionsHtml = mine ? buildFolderOptionsHtml(scheda.folderId) : '';
 
     const head = document.createElement('div');
     head.className = 'scheda-head';
     head.innerHTML = `
       <div class="scheda-title-row">
         <div class="scheda-name-row">
-          ${isEditingNome
+          ${isEditingNome && mine
             ? `<input type="text" class="scheda-name-input" id="schedaNameInput" value="${escapeAttr(scheda.nome)}" />`
-            : `<span class="scheda-name" id="schedaNameDisplay" title="Clicca per rinominare">${escapeHtml(scheda.nome)}</span>`
+            : `<span class="scheda-name" id="schedaNameDisplay" ${mine ? 'title="Clicca per rinominare"' : ''}>${escapeHtml(scheda.nome)}</span>`
           }
+          ${!mine ? `<span class="shared-badge">Condivisa</span>` : ''}
         </div>
         <span class="scheda-count">${scheda.esercizi.length} ESERCIZI</span>
       </div>
       <div class="scheda-toolbar">
-        <select class="btn btn-small" id="selSpostaCartella" title="Sposta in cartella">${folderOptionsHtml}</select>
+        ${mine ? `<select class="btn btn-small" id="selSpostaCartella" title="Sposta in cartella">${folderOptionsHtml}</select>` : ''}
         <button class="btn btn-small" id="btnEsportaImmagine">Esporta immagine</button>
         <button class="btn btn-small" id="btnEsportaPdf">Esporta PDF</button>
-        <button class="btn btn-ghost" id="btnEliminaScheda" title="Elimina scheda">Elimina scheda</button>
+        ${mine
+          ? `<button class="btn btn-ghost" id="btnEliminaScheda" title="Elimina scheda">Elimina scheda</button>`
+          : `<button class="btn btn-primary btn-small" id="btnCopiaScheda">Copia nella mia area</button>`
+        }
       </div>
+      ${mine ? `
+      <div class="field assign-field">
+        <label>Assegnata a (email, opzionale)</label>
+        <input type="email" id="inputAssignedTo" placeholder="email@esempio.com" value="${escapeAttr(scheda.assignedToEmail || '')}" />
+      </div>` : ''}
     `;
     card.appendChild(head);
 
-    if(isEditingNome){
+    if(mine && isEditingNome){
       const input = head.querySelector('#schedaNameInput');
       const commitNome = () => {
         const val = input.value.trim();
@@ -1847,18 +1988,40 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         if(e.key === 'Escape'){ editingSchedaNomeId = null; render(); }
       });
       setTimeout(() => { input.focus(); input.select(); }, 0);
-    } else {
+    } else if(mine){
       head.querySelector('#schedaNameDisplay').addEventListener('click', () => {
         editingSchedaNomeId = scheda.id;
         render();
       });
     }
 
-    head.querySelector('#selSpostaCartella').addEventListener('change', (e) => {
-      scheda.folderId = e.target.value || null;
-      saveData();
-      render();
-    });
+    if(mine){
+      head.querySelector('#selSpostaCartella').addEventListener('change', (e) => {
+        scheda.folderId = e.target.value || null;
+        saveData();
+        render();
+      });
+      head.querySelector('#inputAssignedTo').addEventListener('change', (e) => {
+        scheda.assignedToEmail = e.target.value.trim().toLowerCase();
+        saveData();
+      });
+    } else {
+      head.querySelector('#btnCopiaScheda').addEventListener('click', () => {
+        const copia = JSON.parse(JSON.stringify(scheda));
+        copia.id = uid();
+        copia.nome = scheda.nome + ' (copia)';
+        copia.folderId = null;
+        copia.isMine = true;
+        copia.ownerId = currentUserId;
+        copia.assignedToEmail = '';
+        copia.esercizi = (copia.esercizi || []).map(ex => ({ ...ex, id: uid() }));
+        state.schede.push(copia);
+        state.currentId = copia.id;
+        saveData();
+        render();
+        showToast('Scheda copiata nella tua area');
+      });
+    }
 
     head.querySelector('#btnEsportaImmagine').addEventListener('click', () => esportaSchedaComeImmagine(scheda));
     head.querySelector('#btnEsportaPdf').addEventListener('click', () => esportaSchedaComePdf(scheda));
@@ -2167,7 +2330,9 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 
     const modeBar = document.createElement('div');
     modeBar.className = 'mode-bar';
-    if(editMode){
+    if(!mine){
+      modeBar.innerHTML = '';
+    } else if(editMode){
       modeBar.innerHTML = `
         <button class="btn" id="btnAggiungiEsercizio">+ Aggiungi esercizio</button>
         <button class="btn btn-primary" id="btnSalvaModifiche">Salva modifiche</button>
@@ -2179,9 +2344,10 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 
     schedaContainer.appendChild(card);
 
-    attachConfirmDelete(document.getElementById('btnEliminaScheda'), 'Conferma eliminazione', () => eliminaScheda(scheda));
+    const btnEliminaScheda = document.getElementById('btnEliminaScheda');
+    if(btnEliminaScheda) attachConfirmDelete(btnEliminaScheda, 'Conferma eliminazione', () => eliminaScheda(scheda));
 
-    if(editMode){
+    if(mine && editMode){
       document.getElementById('btnAggiungiEsercizio').addEventListener('click', () => openAggiungiEsercizioModal(scheda));
       document.getElementById('btnSalvaModifiche').addEventListener('click', () => {
         editMode = false;
@@ -2190,7 +2356,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         saveData();
         render();
       });
-    } else {
+    } else if(mine){
       document.getElementById('btnModificaScheda').addEventListener('click', () => {
         editMode = true;
         render();
@@ -2211,6 +2377,91 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       .replace(/>/g,'&gt;')
       .replace(/"/g,'&quot;')
       .replace(/'/g,'&#39;');
+  }
+
+  async function openCondividiCartellaModal(folder){
+    modalRoot.innerHTML = `
+      <div class="overlay" id="ovShare">
+        <div class="modal">
+          <h3>Condividi "${escapeHtml(folder.nome)}"</h3>
+          <p style="font-size:13px; color:var(--text-muted); margin:0 0 14px;">Caricamento condivisioni...</p>
+        </div>
+      </div>
+    `;
+    document.getElementById('ovShare').addEventListener('click', (e) => { if(e.target.id === 'ovShare') closeModal(); });
+    const { data, error } = await sb.from('folder_shares').select('*').eq('folder_id', folder.id);
+    if(error){ console.error('Errore caricamento condivisioni', error); showToast('Errore nel caricamento delle condivisioni'); }
+    renderShareModalBody(folder, data || []);
+  }
+
+  function renderShareModalBody(folder, shares){
+    const rows = shares.map(s => `
+      <div class="share-row">
+        <span class="share-email">${escapeHtml(s.shared_with_email)}</span>
+        <label class="share-toggle">
+          <input type="checkbox" class="share-showall-toggle" data-id="${escapeAttr(s.id)}" ${s.show_all_schede ? 'checked' : ''} />
+          <span>Tutte le schede</span>
+        </label>
+        <button class="share-remove" data-id="${escapeAttr(s.id)}" title="Rimuovi accesso">&times;</button>
+      </div>
+    `).join('') || `<div class="custom-ex-empty">Non condivisa con nessuno ancora.</div>`;
+
+    modalRoot.innerHTML = `
+      <div class="overlay" id="ovShare">
+        <div class="modal">
+          <h3>Condividi "${escapeHtml(folder.nome)}"</h3>
+          <p style="font-size:13px; color:var(--text-muted); margin:0 0 14px;">Chi aggiungi vede questa cartella con il proprio account. "Tutte le schede" spuntato = vede tutto qui dentro; spento = vede solo le schede assegnate a lui.</p>
+          <div class="share-list">${rows}</div>
+          <div class="field" style="margin-top:14px;">
+            <label>Email da condividere</label>
+            <input type="email" id="inputShareEmail" placeholder="email@esempio.com" />
+          </div>
+          <label class="share-toggle" style="margin-bottom:6px;">
+            <input type="checkbox" id="inputShareShowAll" checked />
+            <span>Mostra tutte le schede della cartella</span>
+          </label>
+          <div class="modal-actions">
+            <button class="btn" id="btnChiudiShare">Chiudi</button>
+            <button class="btn btn-primary" id="btnAggiungiShare">Condividi</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('btnChiudiShare').addEventListener('click', closeModal);
+    document.getElementById('ovShare').addEventListener('click', (e) => { if(e.target.id === 'ovShare') closeModal(); });
+
+    modalRoot.querySelectorAll('.share-showall-toggle').forEach(cb => {
+      cb.addEventListener('change', async () => {
+        const { error } = await sb.from('folder_shares').update({ show_all_schede: cb.checked }).eq('id', cb.dataset.id);
+        if(error){ console.error('Errore aggiornamento condivisione', error); showToast('Errore aggiornamento condivisione'); }
+      });
+    });
+
+    modalRoot.querySelectorAll('.share-remove').forEach(btn => {
+      attachConfirmDelete(btn, 'Elimina?', async () => {
+        const { error } = await sb.from('folder_shares').delete().eq('id', btn.dataset.id);
+        if(error){ console.error('Errore rimozione condivisione', error); showToast('Errore rimozione condivisione'); return; }
+        renderShareModalBody(folder, shares.filter(s => String(s.id) !== btn.dataset.id));
+      });
+    });
+
+    document.getElementById('btnAggiungiShare').addEventListener('click', async () => {
+      const emailInput = document.getElementById('inputShareEmail');
+      const email = emailInput.value.trim().toLowerCase();
+      if(!email || !email.includes('@')){ showToast('Inserisci un\'email valida'); return; }
+      const showAll = document.getElementById('inputShareShowAll').checked;
+      const { data: inserted, error } = await sb.from('folder_shares')
+        .insert({ folder_id: folder.id, owner_id: currentUserId, shared_with_email: email, show_all_schede: showAll })
+        .select();
+      if(error){
+        console.error('Errore condivisione', error);
+        showToast(error.code === '23505' ? 'Già condivisa con questa email' : 'Errore nella condivisione');
+        return;
+      }
+      showToast('Cartella condivisa');
+      renderShareModalBody(folder, shares.concat(inserted || []));
+    });
   }
 
   function eliminaScheda(scheda){
@@ -2349,7 +2600,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     const crea = () => {
       const nome = input.value.trim();
       if(!nome) return;
-      const nuova = { id: uid(), nome, esercizi: [], folderId: state.currentFolderId || null, note: '' };
+      const nuova = { id: uid(), nome, esercizi: [], folderId: state.currentFolderId || null, note: '', isMine: true, ownerId: currentUserId, assignedToEmail: '' };
       state.schede.push(nuova);
       state.currentId = nuova.id;
       saveData();
@@ -2865,7 +3116,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 
   document.getElementById('btnNuovaScheda').addEventListener('click', openNuovaSchedaModal);
   document.getElementById('btnNuovaCartella').addEventListener('click', () => {
-    const nuovaCartella = { id: uid(), nome: 'Nuova cartella', parentId: state.currentFolderId || null };
+    const nuovaCartella = { id: uid(), nome: 'Nuova cartella', parentId: state.currentFolderId || null, isMine: true, ownerId: currentUserId };
     state.folders.push(nuovaCartella);
     editingFolderId = nuovaCartella.id;
     saveData();
@@ -2961,6 +3212,9 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         const nuovaScheda = JSON.parse(JSON.stringify(list[i]));
         nuovaScheda.id = uid();
         nuovaScheda.folderId = null;
+        nuovaScheda.isMine = true;
+        nuovaScheda.ownerId = currentUserId;
+        nuovaScheda.assignedToEmail = '';
         (nuovaScheda.esercizi || []).forEach(ex => { ex.id = uid(); });
         state.schede.push(nuovaScheda);
       });
